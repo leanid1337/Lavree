@@ -24,13 +24,13 @@ LAVREE.SWATCHES = {
 LAVREE.PRODUCTS = [
   {
     id: "kalhoty-flow",
-    photo: "photo/product/web/kalhoty-flow.jpg",
+    photo: "photo/Product/web/kalhoty-flow.jpg",
     gallery: [
-      { src: "photo/product/web/kalhoty-flow/front.jpg", label: "Front" },
-      { src: "photo/product/web/kalhoty-flow/back.jpg", label: "Back" },
-      { src: "photo/product/web/kalhoty-flow/detail.jpg", label: "Detail" },
-      { src: "photo/product/web/kalhoty-flow/on-model.jpg", label: "On model" },
-      { src: "photo/product/web/kalhoty-flow/fabric.jpg", label: "Fabric" }
+      { src: "photo/Product/web/kalhoty-flow/front.jpg", label: "Front" },
+      { src: "photo/Product/web/kalhoty-flow/back.jpg", label: "Back" },
+      { src: "photo/Product/web/kalhoty-flow/detail.jpg", label: "Detail" },
+      { src: "photo/Product/web/kalhoty-flow/on-model.jpg", label: "On model" },
+      { src: "photo/Product/web/kalhoty-flow/fabric.jpg", label: "Fabric" }
     ],
     name: "Kalhoty Flow",
     category: "kalhoty",
@@ -45,13 +45,13 @@ LAVREE.PRODUCTS = [
   },
   {
     id: "sortky-muse",
-    photo: "photo/product/web/sortky-muse.jpg",
+    photo: "photo/Product/web/sortky-muse.jpg",
     gallery: [
-      { src: "photo/product/web/sortky-muse/front.jpg", label: "Front" },
-      { src: "photo/product/web/sortky-muse/back.jpg", label: "Back" },
-      { src: "photo/product/web/sortky-muse/detail.jpg", label: "Detail" },
-      { src: "photo/product/web/sortky-muse/on-model.jpg", label: "On model" },
-      { src: "photo/product/web/sortky-muse/fabric.jpg", label: "Fabric" }
+      { src: "photo/Product/web/sortky-muse/front.jpg", label: "Front" },
+      { src: "photo/Product/web/sortky-muse/back.jpg", label: "Back" },
+      { src: "photo/Product/web/sortky-muse/detail.jpg", label: "Detail" },
+      { src: "photo/Product/web/sortky-muse/on-model.jpg", label: "On model" },
+      { src: "photo/Product/web/sortky-muse/fabric.jpg", label: "Fabric" }
     ],
     name: "Šortky Muse",
     category: "sortky",
@@ -66,13 +66,13 @@ LAVREE.PRODUCTS = [
   },
   {
     id: "prodlouzeny-top-aura",
-    photo: "photo/product/web/prodlouzeny-top-aura.jpg",
+    photo: "photo/Product/web/prodlouzeny-top-aura.jpg",
     gallery: [
-      { src: "photo/product/web/prodlouzeny-top-aura/front.jpg", label: "Front" },
-      { src: "photo/product/web/prodlouzeny-top-aura/back.jpg", label: "Back" },
-      { src: "photo/product/web/prodlouzeny-top-aura/detail.jpg", label: "Detail" },
-      { src: "photo/product/web/prodlouzeny-top-aura/on-model.jpg", label: "On model" },
-      { src: "photo/product/web/prodlouzeny-top-aura/fabric.jpg", label: "Fabric" }
+      { src: "photo/Product/web/prodlouzeny-top-aura/front.jpg", label: "Front" },
+      { src: "photo/Product/web/prodlouzeny-top-aura/back.jpg", label: "Back" },
+      { src: "photo/Product/web/prodlouzeny-top-aura/detail.jpg", label: "Detail" },
+      { src: "photo/Product/web/prodlouzeny-top-aura/on-model.jpg", label: "On model" },
+      { src: "photo/Product/web/prodlouzeny-top-aura/fabric.jpg", label: "Fabric" }
     ],
     name: "Prodloužený top Aura",
     category: "topy",
@@ -87,13 +87,13 @@ LAVREE.PRODUCTS = [
   },
   {
     id: "kratky-top-lueur",
-    photo: "photo/product/web/kratky-top-lueur.jpg",
+    photo: "photo/Product/web/kratky-top-lueur.jpg",
     gallery: [
-      { src: "photo/product/web/kratky-top-lueur/front.jpg", label: "Front" },
-      { src: "photo/product/web/kratky-top-lueur/back.jpg", label: "Back" },
-      { src: "photo/product/web/kratky-top-lueur/detail.jpg", label: "Detail" },
-      { src: "photo/product/web/kratky-top-lueur/on-model.jpg", label: "On model" },
-      { src: "photo/product/web/kratky-top-lueur/fabric.jpg", label: "Fabric" }
+      { src: "photo/Product/web/kratky-top-lueur/front.jpg", label: "Front" },
+      { src: "photo/Product/web/kratky-top-lueur/back.jpg", label: "Back" },
+      { src: "photo/Product/web/kratky-top-lueur/detail.jpg", label: "Detail" },
+      { src: "photo/Product/web/kratky-top-lueur/on-model.jpg", label: "On model" },
+      { src: "photo/Product/web/kratky-top-lueur/fabric.jpg", label: "Fabric" }
     ],
     name: "Krátký top Lueur",
     category: "topy",
