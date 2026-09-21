@@ -1,0 +1,1426 @@
+/* ============================================================
+   LAVRÉE studio — global stylesheet
+   Palette: cream #EFE9DB · milk #F7F5F0 · vanilla #E9E2C9
+            blue #2C4066 · indigo #3A4A6E · black #20201F
+            bordeaux #8E3B3B (rare accent)
+   ============================================================ */
+
+:root {
+  --cream: #EFE9DB;
+  --milk: #F7F5F0;
+  --vanilla: #E9E2C9;
+  --blue: #2C4066;
+  --indigo: #3A4A6E;
+  --ink: #20201F;
+  --bordeaux: #8E3B3B;
+
+  --hairline: rgba(44, 64, 102, 0.22);
+  --hairline-soft: rgba(44, 64, 102, 0.12);
+
+  --font-serif: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+  --font-script: "Pinyon Script", cursive;
+  --font-sans: "Jost", "Inter", "Segoe UI", Arial, sans-serif;
+
+  /* header geometry: tall by default, compact after scroll (+50% larger) */
+  --header-h-tall: 144px;
+  --header-h-compact: 96px;
+  --header-h: var(--header-h-tall);
+  --logo-h-tall: 90px;
+  --logo-h-compact: 60px;
+  --logo-h: var(--logo-h-tall);
+  --header-anim: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --header-fill-anim: 300ms ease;
+  /* slide-to-slide recolor of header + search: long, soft cross-fade so the
+     dark<->light change lags the section swap slightly and never jars */
+  --header-color-fade: 700ms cubic-bezier(0.4, 0, 0.2, 1);
+  --header-color-delay: 150ms;
+  --header-border: rgba(44, 64, 102, 0.15);
+  --header-scroll-threshold: 60; /* px, read by js */
+  --header-ink: var(--blue);
+
+  /* fullscreen slider timing (read by js) */
+  --slide-dur: 1100ms;
+  --slide-ease: cubic-bezier(0.65, 0, 0.35, 1);
+  --slide-debounce: 200; /* ms after animation before next gesture */
+  --slide-swipe: 50;     /* px, min touch swipe distance */
+
+  --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* compact header state: js toggles .is-compact on body past the threshold */
+body.is-compact {
+  --header-h: var(--header-h-compact);
+  --logo-h: var(--logo-h-compact);
+}
+
+/* Hovering the header grows ONLY the header bar + logo (+20%). It is a fixed
+   element, so its height change never reflows or scrolls the document, and we
+   deliberately do NOT touch --header-h — the search line and page content stay
+   exactly where they are. (No :has(), which was causing hover-time jank.) */
+.site-header:hover { height: calc(var(--header-h) * 1.2); }
+.site-header:hover .logo { height: calc(var(--logo-h) * 1.2); }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--cream);
+  -webkit-font-smoothing: antialiased;
+}
+
+img { max-width: 100%; display: block; }
+
+a { color: inherit; text-decoration: none; cursor: pointer; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+a:focus-visible, button:focus-visible, input:focus-visible {
+  outline: 1px solid var(--blue);
+  outline-offset: 3px;
+}
+
+::selection { background: var(--blue); color: var(--cream); }
+
+h1, h2, h3, .serif {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  color: var(--blue);
+  line-height: 1.15;
+}
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* Underline link animation */
+.u-link {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 2px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 400;
+}
+.u-link::after {
+  content: "";
+  position: absolute; left: 0; bottom: 0;
+  width: 100%; height: 1px;
+  background: currentColor;
+  transform-origin: right;
+  transition: transform 0.35s var(--ease);
+}
+.u-link:hover::after { transform: scaleX(0); transform-origin: left; }
+.u-link--grow::after { transform: scaleX(0); transform-origin: left; }
+.u-link--grow:hover::after { transform: scaleX(1); }
+
+/* ============================================================
+   Header
+   ============================================================ */
+
+.site-header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  height: var(--header-h);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0 clamp(16px, 3vw, 36px);
+  color: var(--header-ink);
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition: height var(--header-anim),
+              background var(--header-fill-anim),
+              color var(--header-color-fade) var(--header-color-delay),
+              border-color var(--header-fill-anim);
+}
+
+/* Over a dark slide (hero / Navy Edit) the header sits on a solid black bar
+   with cream logo + links; hover/compact still override it to the cream state. */
+body.hero-dark .site-header {
+  --header-ink: var(--cream);
+  background: var(--ink);
+  border-bottom-color: transparent;
+}
+
+/* Filled state: hover, compact after scroll, open menu.
+   body-prefixed so it outranks the hero-dark rule above. */
+body .site-header:hover,
+body .site-header.header--compact,
+body .site-header.is-filled {
+  --header-ink: var(--blue);
+  background: var(--cream);
+  border-bottom-color: var(--header-border);
+}
+
+.header-left, .header-right {
+  display: flex; align-items: center;
+  gap: clamp(10px, 1.6vw, 22px);
+}
+.header-right { justify-content: flex-end; }
+
+.menu-toggle {
+  display: flex; align-items: center; gap: 10px;
+  min-height: 44px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  font-size: 11px; font-weight: 400;
+}
+.menu-toggle .burger {
+  display: inline-flex; flex-direction: column; gap: 5px; width: 20px;
+}
+.menu-toggle .burger span {
+  height: 1px; background: currentColor; transition: transform .3s var(--ease);
+}
+.menu-toggle:hover .burger span:first-child { transform: translateY(-1px); }
+.menu-toggle:hover .burger span:last-child { transform: translateY(1px); }
+
+/* Logo: two stacked images cross-faded by opacity (no src swap) */
+.logo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--logo-h);
+  transition: height var(--header-anim);
+}
+.logo__img {
+  height: 100%;
+  width: auto;
+  display: block;
+  transition: opacity var(--header-fill-anim);
+}
+.logo__img--cream {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+}
+/* cream logo over dark slides while the header is transparent */
+body.hero-dark .logo__img--blue { opacity: 0; }
+body.hero-dark .logo__img--cream { opacity: 1; }
+/* filled header always shows the blue logo (body-prefixed to win over hero-dark) */
+body .site-header:hover .logo__img--blue,
+body .site-header.header--compact .logo__img--blue,
+body .site-header.is-filled .logo__img--blue { opacity: 1; }
+body .site-header:hover .logo__img--cream,
+body .site-header.header--compact .logo__img--cream,
+body .site-header.is-filled .logo__img--cream { opacity: 0; }
+
+.header-contact {
+  letter-spacing: 0.14em; text-transform: uppercase;
+  font-size: 11px; font-weight: 400;
+  min-height: 44px; display: inline-flex; align-items: center;
+}
+.header-contact:hover { color: var(--bordeaux); }
+
+.icon-btn {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px;
+}
+.icon-btn svg {
+  width: 19px; height: 19px;
+  fill: none; stroke: currentColor; stroke-width: 1.2;
+  transition: stroke 0.4s var(--ease);
+}
+.icon-btn:hover svg { stroke: var(--bordeaux); }
+.icon-btn .count {
+  position: absolute; top: 4px; right: 2px;
+  min-width: 15px; height: 15px;
+  border-radius: 50%;
+  background: var(--bordeaux); color: var(--milk);
+  font-size: 9px; font-weight: 400; line-height: 15px;
+  text-align: center;
+  opacity: 0; transform: scale(0.5);
+  transition: opacity .25s var(--ease), transform .25s var(--ease);
+}
+.icon-btn .count.is-visible { opacity: 1; transform: scale(1); }
+
+/* Search: centered field on home, collapsible on inner pages.
+   The dark<->light recolor between slides is a cross-fade of two stacked
+   colour copies (label + underline), never a hard colour switch. */
+.search-bar {
+  position: fixed;
+  top: var(--header-h); left: 0; right: 0;
+  z-index: 99;
+  display: flex; justify-content: center;
+  padding: 10px 20px;
+  transition: opacity .35s var(--ease), transform .35s var(--ease),
+              visibility .35s, top var(--header-anim);
+}
+
+/* Homepage: the search field belongs to the hero only. It lifts + fades away
+   on any later section and returns on the first. Fixed positioning keeps it
+   out of the header flow, so the logo/links/icons never shift when it hides. */
+body.page-home .search-bar {
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+  /* hide: a touch quicker than the header recolor, no delay */
+  transition: opacity 450ms cubic-bezier(0.4, 0, 0.2, 1),
+              transform 450ms cubic-bezier(0.4, 0, 0.2, 1),
+              top var(--header-anim);
+}
+body.page-home.is-hero-slide .search-bar {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  /* show: header timing + 150ms delay so it trails the hero sliding in */
+  transition: opacity var(--header-color-fade) var(--header-color-delay),
+              transform var(--header-color-fade) var(--header-color-delay),
+              top var(--header-anim);
+}
+
+.search-field {
+  position: relative;
+  width: min(420px, 86vw);
+}
+.search-field input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 6px 2px;
+  font-family: var(--font-sans);
+  font-weight: 300; font-size: 13px;
+  letter-spacing: 0.08em;
+  text-align: center;
+  color: var(--blue);
+  caret-color: currentColor;
+  transition: color var(--header-color-fade) var(--header-color-delay);
+}
+/* the visible idle label is the two layers below, not the native placeholder */
+.search-field input::placeholder { color: transparent; }
+
+/* idle "Search" label — two coloured copies, cross-faded by opacity */
+.search-field__label {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+  transition: opacity .3s var(--ease);
+}
+.search-field__layer {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  text-transform: uppercase; letter-spacing: 0.18em; font-size: 11px;
+  opacity: 0;
+  transition: opacity var(--header-color-fade) var(--header-color-delay);
+}
+.search-field__layer--dark  { color: var(--blue); opacity: 0.65; }
+.search-field__layer--light { color: var(--milk); opacity: 0; }
+
+/* underline — same two-layer cross-fade */
+.search-field__rule {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+  pointer-events: none;
+}
+.search-field__rule-layer {
+  position: absolute; inset: 0;
+  opacity: 0;
+  transition: opacity var(--header-color-fade) var(--header-color-delay);
+}
+.search-field__rule-layer--dark  { background: var(--blue); opacity: 1; }
+.search-field__rule-layer--light { background: var(--milk); opacity: 0; }
+
+/* Dark slide: fade the dark copies out, the light copies in */
+body.hero-dark .search-field input { color: var(--milk); }
+body.hero-dark .search-field__layer--dark { opacity: 0; }
+body.hero-dark .search-field__layer--light { opacity: 0.7; }
+body.hero-dark .search-field__rule-layer--dark { opacity: 0; }
+body.hero-dark .search-field__rule-layer--light { opacity: 0.85; }
+
+/* Hide the idle label while typing or focused so only caret + text show */
+.search-field input:focus ~ .search-field__label,
+.search-field input:not(:placeholder-shown) ~ .search-field__label { opacity: 0; }
+
+/* Inner pages: collapsible, always on cream, full-width divider under the bar */
+body:not(.page-home) .search-bar {
+  background: var(--cream);
+  border-bottom: 1px solid var(--hairline-soft);
+  opacity: 0; visibility: hidden; transform: translateY(-6px);
+}
+body:not(.page-home) .search-bar.is-open {
+  opacity: 1; visibility: visible; transform: translateY(0);
+}
+.search-toggle { display: none; }
+body:not(.page-home) .search-toggle { display: inline-flex; }
+
+/* ============================================================
+   Fullscreen menu overlay
+   ============================================================ */
+
+.menu-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: var(--cream);
+  display: flex;
+  opacity: 0; visibility: hidden;
+  transition: opacity .45s var(--ease), visibility .45s;
+  overflow-y: auto;
+}
+.menu-overlay.is-open { opacity: 1; visibility: visible; }
+
+.menu-overlay__inner {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) 1fr;
+  gap: 4vw;
+  width: 100%;
+  padding: calc(var(--header-h) + 6vh) clamp(24px, 6vw, 90px) 8vh;
+}
+
+.menu-close {
+  position: absolute;
+  top: 14px; right: clamp(16px, 3vw, 36px);
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+}
+.menu-close svg {
+  width: 22px; height: 22px;
+  stroke: var(--blue); stroke-width: 1.2; fill: none;
+  transition: transform .3s var(--ease);
+}
+.menu-close:hover svg { transform: rotate(90deg); }
+
+.menu-primary { list-style: none; }
+.menu-primary li { overflow: hidden; }
+.menu-primary a {
+  font-family: var(--font-serif);
+  font-size: clamp(30px, 4.4vw, 52px);
+  font-weight: 500;
+  color: var(--blue);
+  line-height: 1.35;
+  display: inline-block;
+  transform: translateY(110%);
+  transition: color .3s var(--ease), transform .6s var(--ease);
+}
+.menu-overlay.is-open .menu-primary a { transform: translateY(0); }
+.menu-primary li:nth-child(2) a { transition-delay: .04s; }
+.menu-primary li:nth-child(3) a { transition-delay: .08s; }
+.menu-primary li:nth-child(4) a { transition-delay: .12s; }
+.menu-primary li:nth-child(5) a { transition-delay: .16s; }
+.menu-primary li:nth-child(6) a { transition-delay: .2s; }
+.menu-primary li:nth-child(7) a { transition-delay: .24s; }
+.menu-primary li:nth-child(8) a { transition-delay: .28s; }
+.menu-primary a:hover,
+.menu-primary li.is-active a { color: var(--bordeaux); font-style: italic; }
+
+.menu-secondary {
+  padding-top: 1.2vh;
+  align-self: start;
+  min-height: 200px;
+}
+.menu-secondary ul { list-style: none; }
+.menu-secondary a {
+  display: inline-block;
+  font-size: 14px; font-weight: 300;
+  letter-spacing: 0.1em;
+  color: var(--indigo);
+  padding: 7px 0;
+  min-height: 34px;
+  opacity: 0; transform: translateX(-8px);
+  transition: opacity .35s var(--ease), transform .35s var(--ease),
+              color .25s var(--ease);
+}
+.menu-secondary.is-visible a { opacity: 1; transform: translateX(0); }
+.menu-secondary li:nth-child(2) a { transition-delay: .05s; }
+.menu-secondary li:nth-child(3) a { transition-delay: .1s; }
+.menu-secondary li:nth-child(4) a { transition-delay: .15s; }
+.menu-secondary a:hover { color: var(--bordeaux); }
+
+/* ============================================================
+   Placeholders ("photos")
+   ============================================================ */
+
+.ph {
+  position: relative;
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.ph__label {
+  font-family: var(--font-serif);
+  font-size: clamp(15px, 1.6vw, 22px);
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 0 12%;
+  opacity: 0.85;
+}
+
+/* ============================================================
+   Homepage — fullscreen vertical slider
+   ============================================================ */
+
+.home-slider {
+  height: 100dvh;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  overflow-anchor: none;
+}
+/* while js animates scrollTop, native snap and smooth-scroll must not fight it */
+.home-slider.is-animating {
+  scroll-snap-type: none;
+  scroll-behavior: auto;
+}
+.slide {
+  min-height: 100dvh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Slide 1 — hero campaign */
+.slide--hero {
+  background: var(--indigo);
+  color: var(--cream);
+  justify-content: flex-end;
+  align-items: center;
+  text-align: center;
+  padding-bottom: 9vh;
+}
+.slide--hero .hero-veil {
+  position: absolute; inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(120% 80% at 50% 10%, rgba(239,233,219,0.06), transparent 60%),
+    linear-gradient(180deg, rgba(32,32,31,0.28), transparent 34%, rgba(32,32,31,0.55));
+  pointer-events: none;
+}
+
+/* Hero lookbook: a full-screen slideshow. One photo fills the hero, the set
+   cross-fades through (driven by JS toggling .is-active). Each photo is
+   darkened by default and revealed (cross-faded to its plain copy) on hover. */
+.slide--hero .hero-gallery {
+  position: absolute; inset: 0;
+  z-index: 0;
+  background: var(--ink);
+}
+.hero-shot {
+  position: absolute; inset: 0;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden; /* perf: only the active + leaving shots are composited */
+  pointer-events: none;
+  transition: opacity 1200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* perf: photos that aren't on screen are skipped entirely (no paint, and the
+   UA can drop their decoded bitmaps), so only 1-2 full-screen images ever
+   render at once instead of all seven. */
+.hero-shot:not(.is-active):not(.is-leaving) { content-visibility: hidden; }
+.hero-shot.is-active,
+.hero-shot.is-leaving { visibility: visible; }
+.hero-shot.is-active {
+  opacity: 1;
+  pointer-events: auto; /* only the visible photo reacts to hover */
+}
+.hero-shot__img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center 35%; /* bias toward the figures, not the sky/ground */
+  transition: opacity 600ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hero-shot__img--plain { opacity: 0; }
+.hero-shot:hover .hero-shot__img--plain { opacity: 1; }
+.hero-shot:hover .hero-shot__img--filtered { opacity: 0; }
+
+.hero-content { position: relative; z-index: 2; }
+.hero-content h1 {
+  color: var(--cream);
+  font-size: clamp(38px, 6vw, 76px);
+  letter-spacing: 0.18em;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+.hero-content .hero-sub {
+  font-family: var(--font-sans);
+  font-weight: 300;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  font-size: 12px;
+  margin: 14px 0 26px;
+  opacity: 0.85;
+}
+/* Shop: 1.5x of the 12px base. letter-spacing is em-based so it scales with
+   font-size; padding grows the tap target to >= 44x44 and the underline is
+   inset to hug the word and thickened to keep the same visual proportion. */
+.hero-content .u-link {
+  font-size: 18px;
+  letter-spacing: 0.18em;
+  padding: 13px 16px;
+}
+.hero-content .u-link::after {
+  left: 16px; right: 16px; width: auto;
+  bottom: 13px;
+  height: 1.5px;
+}
+
+.scroll-hint {
+  --bob-amp: 8.5px; /* ~1.45x the original 6px, to match the larger arrow */
+  position: absolute;
+  left: 50%; bottom: 3vh;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase;
+  opacity: 0.75;
+}
+.scroll-hint svg {
+  width: 21px; height: 30px;      /* 14x20 * 1.5 */
+  stroke: currentColor; fill: none;
+  stroke-width: 0.8;              /* 1.2 / 1.5 keeps the stroke visually as thin */
+  animation: hint-bob calc(var(--slide-dur) * 2) var(--slide-ease) infinite;
+}
+@keyframes hint-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(var(--bob-amp)); }
+}
+
+/* Slide 2 — editorial product row */
+.slide--editorial {
+  background: var(--milk);
+  justify-content: center;
+  padding: calc(var(--header-h) + 4vh) clamp(20px, 4vw, 60px) 6vh;
+  gap: 4vh;
+}
+.editorial-manifest {
+  text-align: center;
+}
+.editorial-manifest h2 {
+  font-size: clamp(24px, 3vw, 38px);
+  letter-spacing: 0.1em;
+}
+.editorial-manifest p {
+  margin-top: 10px;
+  font-size: 12px; letter-spacing: 0.26em; text-transform: uppercase;
+  color: var(--indigo);
+}
+.editorial-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(10px, 1.6vw, 24px);
+}
+.editorial-cta { text-align: center; }
+
+/* Product card (shared: home editorial + PLP) */
+.card {
+  position: relative;
+  display: flex; flex-direction: column;
+  background: transparent;
+}
+.card__media {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+}
+.card__media .ph { position: absolute; inset: 0; transition: opacity .5s var(--ease); }
+.card__media .ph--alt { opacity: 0; }
+.card:hover .card__media .ph--alt { opacity: 1; }
+.card:hover .card__media .ph--main { opacity: 0; }
+
+/* Real product photo + name overlaid (matches the editorial mockup) */
+.card__photo {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform .7s var(--ease);
+}
+.card:hover .card__photo { transform: scale(1.03); }
+
+.card__wish {
+  position: absolute; top: 6px; right: 6px; z-index: 3;
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  transition: opacity .3s var(--ease);
+}
+.card:hover .card__wish, .card__wish.is-active { opacity: 1; }
+.card__wish svg {
+  width: 18px; height: 18px;
+  fill: none; stroke: var(--blue); stroke-width: 1.2;
+  transition: fill .25s var(--ease), stroke .25s var(--ease);
+}
+.card__wish.is-active svg { fill: var(--bordeaux); stroke: var(--bordeaux); }
+.card__wish:hover svg { stroke: var(--bordeaux); }
+
+.card__badge {
+  position: absolute; top: 10px; left: 10px; z-index: 2;
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--bordeaux);
+}
+
+.card__info { padding: 12px 4px 18px; }
+.card__name {
+  font-family: var(--font-serif);
+  font-size: 16px; font-weight: 500;
+  color: var(--blue);
+  letter-spacing: 0.06em;
+}
+.card__price {
+  font-size: 12px; letter-spacing: 0.1em;
+  margin-top: 3px; color: var(--ink);
+}
+.card__swatches { display: flex; gap: 6px; margin-top: 8px; }
+.card__swatches i {
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 1px solid var(--hairline);
+  display: inline-block;
+}
+
+/* Slide 3 — Navy Edit campaign */
+.slide--campaign {
+  background: var(--blue);
+  color: var(--cream);
+  align-items: center; justify-content: center;
+  text-align: center;
+}
+.campaign-photo {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 0;
+}
+/* veil over the photo so the cream campaign text stays legible */
+.slide--campaign::before {
+  content: "";
+  position: absolute; inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(32,32,31,0.35), rgba(32,32,31,0.5));
+}
+.campaign-content { position: relative; z-index: 2; padding: 0 20px; }
+.campaign-content h2 {
+  color: var(--cream);
+  font-size: clamp(34px, 5vw, 64px);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.campaign-content p {
+  font-size: 12px; letter-spacing: 0.3em; text-transform: uppercase;
+  margin: 16px 0 28px; opacity: 0.85;
+}
+
+/* Slide 5 — footer slide wrapper */
+.slide--footer { background: var(--vanilla); justify-content: stretch; }
+.slide--footer .site-footer { border-top: 0; flex: 1; min-height: 100dvh; }
+/* on the home footer slide, vertically center the content so the top half
+   is no longer empty; the wave stays pinned to the bottom */
+.slide--footer .footer-inner {
+  flex: 1;
+  display: flex; flex-direction: column; justify-content: center;
+}
+
+/* Slide progress dots (home) */
+.slide-dots {
+  position: fixed;
+  right: clamp(12px, 2vw, 26px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 90;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.slide-dots button {
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+}
+.slide-dots button::before {
+  content: "";
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--blue);
+  opacity: 0.35;
+  transition: opacity var(--slide-dur) var(--slide-ease),
+              transform var(--slide-dur) var(--slide-ease),
+              background var(--slide-dur) var(--slide-ease);
+}
+.slide-dots button.is-active::before { opacity: 1; transform: scale(1.5); }
+body.hero-dark .slide-dots button::before { background: var(--cream); }
+
+/* ============================================================
+   PLP — catalog
+   ============================================================ */
+
+.plp-subheader {
+  position: sticky;
+  top: var(--header-h);
+  transition: top var(--header-anim);
+  z-index: 80;
+  background: var(--cream);
+  border-bottom: 1px solid var(--hairline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 clamp(16px, 3vw, 36px);
+  min-height: 52px;
+  flex-wrap: wrap;
+}
+.plp-subheader__left { display: flex; align-items: center; gap: clamp(14px, 2.4vw, 34px); flex-wrap: wrap; }
+.plp-title {
+  font-family: var(--font-serif);
+  font-size: 18px; font-weight: 600;
+  letter-spacing: 0.26em; text-transform: uppercase;
+  color: var(--blue);
+}
+.plp-subs { display: flex; gap: clamp(10px, 1.8vw, 24px); flex-wrap: wrap; }
+.plp-subs a {
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 14px 0; min-height: 44px; display: inline-flex; align-items: center;
+  color: var(--indigo);
+  border-bottom: 1px solid transparent;
+  transition: color .25s var(--ease);
+}
+.plp-subs a:hover { color: var(--bordeaux); }
+.plp-subs a.is-active { color: var(--blue); border-bottom-color: var(--blue); }
+
+.plp-tools { display: flex; gap: clamp(12px, 2vw, 28px); }
+.plp-tools button {
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  min-height: 44px;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.plp-tools button:hover { color: var(--bordeaux); }
+.plp-tools svg { width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 1.4; transition: transform .3s var(--ease); }
+.plp-tools button[aria-expanded="true"] svg { transform: rotate(180deg); }
+
+.plp-panel {
+  border-bottom: 1px solid var(--hairline);
+  background: var(--milk);
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height .45s var(--ease);
+}
+.plp-panel.is-open { max-height: 260px; }
+.plp-panel__inner {
+  display: flex; flex-wrap: wrap; gap: 10px 28px;
+  padding: 22px clamp(16px, 3vw, 36px);
+}
+.plp-panel__group { min-width: 140px; }
+.plp-panel__group h4 {
+  font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+  font-weight: 400; color: var(--indigo); margin-bottom: 8px;
+}
+.plp-panel__group label {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; padding: 4px 0; cursor: pointer;
+}
+.plp-panel__group input { accent-color: var(--blue); }
+
+/* Edge-to-edge grid with hairlines */
+.plp-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-left: 1px solid var(--hairline-soft);
+}
+.plp-grid .card {
+  border-right: 1px solid var(--hairline-soft);
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.plp-grid .card__info { padding: 14px 14px 22px; }
+.plp-grid .card__media { aspect-ratio: 3 / 4; }
+
+.plp-empty {
+  padding: 12vh 20px; text-align: center;
+  font-family: var(--font-serif); font-size: 22px; color: var(--indigo);
+}
+
+/* ============================================================
+   PDP — product page
+   ============================================================ */
+
+.pdp {
+  display: grid;
+  grid-template-columns: minmax(0, 58%) minmax(0, 42%);
+  padding-top: var(--header-h-tall); /* static: page layout must not shift on compact toggle */
+}
+
+.pdp-gallery { position: relative; background: var(--blue); }
+.pdp-gallery__stack { display: flex; flex-direction: column; gap: 2px; }
+/* each shot fits one screen (below the header) so a whole photo is visible;
+   the portrait image is shown in full (contain), centred on the brand-blue ground. */
+.pdp-shot {
+  position: relative;
+  height: calc(100dvh - var(--header-h-tall));
+  overflow: hidden;
+  background: var(--blue);
+}
+.pdp-shot__img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; /* fill the whole shot, no empty ground */
+}
+
+.pdp-gallery__dots {
+  position: sticky;
+  top: 50%;
+  float: left;
+  width: 0;                 /* reserve no width, so the photo fills edge-to-edge */
+  transform: translateY(-50%);
+  z-index: 5;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.pdp-gallery__dots button {
+  width: 20px; height: 20px;
+  margin-left: clamp(8px, 1.4vw, 20px); /* inset the dots as an overlay, not a gutter */
+  display: flex; align-items: center; justify-content: center;
+}
+.pdp-gallery__dots button::before {
+  content: ""; width: 5px; height: 5px; border-radius: 50%;
+  background: #fff; opacity: .55; /* light dots readable over any photo */
+  box-shadow: 0 0 4px rgba(32, 32, 31, 0.45);
+  transition: opacity .3s var(--ease), transform .3s var(--ease);
+}
+.pdp-gallery__dots button.is-active::before { opacity: 1; transform: scale(1.4); }
+
+.pdp-wish {
+  position: absolute; top: 10px; right: 10px; z-index: 6;
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+}
+.pdp-wish svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.2;
+  filter: drop-shadow(0 1px 4px rgba(32, 32, 31, 0.5));
+}
+.pdp-wish.is-active svg { fill: var(--bordeaux); stroke: var(--bordeaux); }
+
+.pdp-panel-wrap { position: relative; background: var(--milk); }
+/* ~1.5x larger panel so it holds its own next to the full-bleed photos */
+.pdp-panel {
+  position: sticky;
+  top: var(--header-h);
+  min-height: calc(100dvh - var(--header-h));
+  transition: top var(--header-anim), min-height var(--header-anim);
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 48px clamp(24px, 3vw, 56px);
+  max-width: 660px;
+  margin: 0 auto;
+}
+
+.pdp-panel h1 {
+  font-size: clamp(34px, 3.6vw, 50px);
+  letter-spacing: 0.08em;
+}
+.pdp-price { font-size: 22px; letter-spacing: 0.08em; margin-top: 12px; }
+
+.pdp-row { margin-top: 40px; }
+.pdp-row__label {
+  font-size: 14px; letter-spacing: 0.24em; text-transform: uppercase;
+  color: var(--indigo);
+}
+.pdp-swatches { display: flex; gap: 14px; margin-top: 14px; }
+.pdp-swatches button {
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 1px solid var(--hairline);
+  position: relative;
+}
+.pdp-swatches button.is-active::after {
+  content: ""; position: absolute; inset: -7px;
+  border: 1px solid var(--blue); border-radius: 50%;
+}
+
+.pdp-sizes { display: flex; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+.pdp-sizes button {
+  min-width: 66px; height: 62px;
+  border: 1px solid var(--hairline);
+  font-size: 17px; letter-spacing: 0.08em;
+  transition: border-color .25s var(--ease), background .25s var(--ease);
+}
+.pdp-sizes button:hover:not(:disabled) { border-color: var(--blue); }
+.pdp-sizes button.is-active { background: var(--blue); color: var(--cream); border-color: var(--blue); }
+.pdp-sizes button:disabled {
+  color: rgba(32,32,31,0.3);
+  text-decoration: line-through;
+  cursor: not-allowed;
+  border-color: var(--hairline-soft);
+}
+.pdp-findsize {
+  display: inline-block; margin-top: 18px;
+  font-size: 16px; letter-spacing: 0.1em;
+  color: var(--indigo);
+  border-bottom: 1px solid var(--hairline);
+  padding-bottom: 2px;
+}
+.pdp-findsize:hover { color: var(--bordeaux); border-color: var(--bordeaux); }
+
+/* Info tooltip — small (i) icon by the price / size that opens a note
+   (payment, delivery, size guide) on click or hover. The pop spans the panel
+   line it belongs to, so it never overflows the narrow column. */
+.pdp-price, .pdp-row__label { position: relative; }
+.info-tip { display: inline-flex; vertical-align: middle; }
+.info-tip__btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; margin-left: 8px;
+  color: var(--indigo);
+  transition: color .25s var(--ease);
+}
+.info-tip__btn svg {
+  width: 17px; height: 17px;
+  stroke: currentColor; fill: none; stroke-width: 1.3;
+}
+.info-tip__btn:hover, .info-tip.is-open .info-tip__btn { color: var(--blue); }
+
+.info-tip__pop {
+  position: absolute;
+  top: calc(100% + 12px); left: 0; right: 0;
+  z-index: 60;
+  background: var(--cream);
+  border: 1px solid var(--header-border);
+  box-shadow: 0 14px 36px rgba(32, 32, 31, 0.16);
+  padding: 18px 22px 20px;
+  text-align: left;
+  opacity: 0; visibility: hidden; transform: translateY(-6px);
+  transition: opacity .28s var(--ease), transform .28s var(--ease), visibility .28s;
+}
+.info-tip.is-open .info-tip__pop,
+.info-tip__btn:hover + .info-tip__pop {
+  opacity: 1; visibility: visible; transform: translateY(0);
+}
+.info-tip__title {
+  display: block;
+  font-family: var(--font-serif); font-weight: 500;
+  color: var(--blue);
+  font-size: 21px; line-height: 1.15; letter-spacing: 0.03em;
+  text-transform: none;
+  margin-bottom: 8px;
+}
+.info-tip__title--gap { margin-top: 16px; }
+.info-tip__body {
+  display: block;
+  font-family: var(--font-sans); font-weight: 300;
+  font-size: 14px; line-height: 1.6; letter-spacing: normal;
+  text-transform: none;
+  color: var(--ink);
+}
+
+.pdp-cta {
+  margin-top: 48px;
+  width: 100%;
+  background: var(--ink);
+  color: var(--milk);
+  min-height: 74px;
+  letter-spacing: 0.22em; text-transform: uppercase; font-size: 17px;
+  transition: background .3s var(--ease);
+}
+.pdp-cta:hover { background: var(--blue); }
+.pdp-note {
+  margin-top: 14px; font-size: 15px; color: var(--indigo);
+  letter-spacing: 0.06em; text-align: center;
+}
+
+.accordion { margin-top: 44px; border-top: 1px solid var(--hairline); }
+.accordion__item { border-bottom: 1px solid var(--hairline); }
+.accordion__trigger {
+  width: 100%;
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: 72px;
+  font-size: 16px; letter-spacing: 0.2em; text-transform: uppercase;
+}
+.accordion__trigger svg {
+  width: 16px; height: 16px; stroke: var(--blue); fill: none; stroke-width: 1.4;
+  transition: transform .35s var(--ease);
+}
+.accordion__trigger[aria-expanded="true"] svg { transform: rotate(45deg); }
+.accordion__content {
+  overflow: hidden; max-height: 0;
+  transition: max-height .4s var(--ease);
+}
+.accordion__content p {
+  padding: 0 0 26px;
+  font-size: 18px; line-height: 1.7; color: var(--ink);
+}
+
+/* ============================================================
+   Modal (preorder)
+   ============================================================ */
+
+.modal {
+  position: fixed; inset: 0; z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  opacity: 0; visibility: hidden;
+  transition: opacity .35s var(--ease), visibility .35s;
+}
+.modal.is-open { opacity: 1; visibility: visible; }
+.modal__backdrop { position: absolute; inset: 0; background: rgba(32,32,31,0.45); }
+.modal__box {
+  position: relative;
+  background: var(--milk);
+  max-width: 420px; width: 100%;
+  padding: 48px 36px 40px;
+  text-align: center;
+  transform: translateY(14px);
+  transition: transform .35s var(--ease);
+}
+.modal.is-open .modal__box { transform: translateY(0); }
+.modal__close {
+  position: absolute; top: 6px; right: 6px;
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal__close svg { width: 18px; height: 18px; stroke: var(--blue); fill: none; stroke-width: 1.2; }
+.modal__box h3 { font-size: 24px; letter-spacing: 0.1em; }
+.modal__box p { margin: 14px 0 26px; font-size: 13px; color: var(--ink); }
+.modal__box .btn-dark {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--ink); color: var(--milk);
+  min-height: 48px; padding: 0 30px;
+  letter-spacing: 0.2em; text-transform: uppercase; font-size: 11px;
+  transition: background .3s var(--ease);
+}
+.modal__box .btn-dark:hover { background: var(--bordeaux); }
+.modal__handle {
+  display: block; margin-top: 14px;
+  font-family: var(--font-script); font-size: 20px; color: var(--indigo);
+}
+
+/* ============================================================
+   Footer
+   ============================================================ */
+
+.site-footer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--vanilla);
+  border-top: 1px solid var(--hairline);
+  overflow: hidden; /* clips the drifting wave */
+}
+.footer-inner {
+  position: relative;
+  z-index: 1; /* above the wave */
+  padding: clamp(48px, 8vh, 100px) clamp(20px, 4vw, 60px) clamp(110px, 17vh, 210px);
+}
+
+/* Large editorial line — fills the top of the footer elegantly */
+.footer-lede {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  color: var(--blue);
+  font-size: clamp(32px, 5.2vw, 68px);
+  line-height: 1.08;
+  letter-spacing: 0.01em;
+  margin-bottom: clamp(40px, 7vh, 90px);
+}
+.footer-lede em {
+  font-style: italic;
+  color: var(--indigo);
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(24px, 3vw, 48px);
+  padding-bottom: clamp(34px, 5vh, 60px);
+}
+.footer-col h4 {
+  font-size: 13px; font-weight: 400;
+  letter-spacing: 0.26em; text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 22px;
+}
+.footer-col ul { list-style: none; }
+.footer-col a {
+  display: inline-block;
+  font-family: var(--font-serif);
+  font-size: clamp(17px, 1.4vw, 21px); line-height: 1.35;
+  padding: 6px 0;
+  color: var(--ink);
+  transition: color .25s var(--ease);
+}
+.footer-col a:hover { color: var(--bordeaux); }
+
+.footer-mid {
+  display: flex; flex-wrap: wrap; gap: 28px;
+  align-items: flex-end; justify-content: space-between;
+  padding: clamp(28px, 4vh, 46px) 0 0;
+  border-top: 1px solid var(--hairline);
+}
+.newsletter { flex: 1 1 340px; max-width: 500px; }
+.newsletter label {
+  display: block;
+  font-size: 12px; letter-spacing: 0.26em; text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 12px;
+}
+.newsletter form { display: flex; border-bottom: 1px solid var(--blue); }
+.newsletter input {
+  flex: 1;
+  background: transparent; border: 0;
+  padding: 12px 2px;
+  font-family: var(--font-sans); font-weight: 300; font-size: 15px;
+  color: var(--ink);
+}
+.newsletter input::placeholder { color: var(--indigo); opacity: .7; }
+.newsletter button {
+  font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+  padding: 12px 4px; min-height: 44px;
+}
+.newsletter button:hover { color: var(--bordeaux); }
+.newsletter .newsletter__ok {
+  font-size: 13px; color: var(--bordeaux); margin-top: 8px;
+  display: none;
+}
+.newsletter.is-done form { display: none; }
+.newsletter.is-done .newsletter__ok { display: block; }
+
+.country-switch {
+  font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 44px;
+}
+.country-switch svg { width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 1.4; }
+.country-switch:hover { color: var(--bordeaux); }
+
+/* ---------- Flowing wave (footer bottom) ----------
+   Layers of translucent blue waves drifting horizontally. Each SVG is 200%
+   wide holding two wavelengths, so translateX(-50%) = one wavelength and the
+   loop is seamless. transform-only + off-main-thread CSS animation. */
+.footer-wave {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: clamp(90px, 16vh, 200px);
+  z-index: 0;
+  pointer-events: none;
+}
+.footer-wave__svg {
+  position: absolute;
+  left: 0; bottom: 0;
+  width: 200%; height: 100%;
+  display: block;
+  animation: footer-wave-drift linear infinite;
+  animation-play-state: paused; /* only runs while the footer is on screen */
+}
+.footer-wave.is-live .footer-wave__svg { animation-play-state: running; }
+.footer-wave__svg path { fill: currentColor; }
+.footer-wave__svg--1 { color: var(--indigo); opacity: 0.16; animation-duration: 26s; }
+.footer-wave__svg--2 { color: var(--blue);   opacity: 0.15; animation-duration: 34s; animation-direction: reverse; }
+.footer-wave__svg--3 { color: var(--blue);   opacity: 0.30; animation-duration: 20s; }
+
+@keyframes footer-wave-drift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .footer-wave__svg { animation: none; } /* keep the wave shape, drop the drift */
+}
+
+/* ============================================================
+   About page
+   ============================================================ */
+
+.about { padding-top: var(--header-h-tall); }
+.about-hero {
+  min-height: 72dvh;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  padding: 10vh clamp(20px, 6vw, 80px);
+}
+.about-hero h1 {
+  font-size: clamp(30px, 4.6vw, 58px);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+  max-width: 20ch;
+}
+.about-hero h1 em {
+  font-family: var(--font-script);
+  font-style: normal; font-weight: 400;
+  color: var(--bordeaux);
+  letter-spacing: 0;
+}
+
+.about-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 76dvh;
+}
+.about-row--flip .about-row__media { order: 2; }
+.about-row__media { position: relative; min-height: 320px; }
+.about-row__text {
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 10vh clamp(24px, 5vw, 80px);
+  gap: 16px;
+  background: var(--milk);
+}
+.about-row__text h2 { font-size: clamp(22px, 2.6vw, 34px); letter-spacing: 0.08em; }
+.about-row__text p { max-width: 46ch; font-size: 14px; line-height: 1.8; }
+.about-row__text .u-link { color: var(--blue); margin-top: 8px; align-self: flex-start; }
+
+.about-facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+}
+.about-facts div {
+  padding: 7vh 24px;
+  text-align: center;
+  border-right: 1px solid var(--hairline);
+}
+.about-facts div:last-child { border-right: 0; }
+.about-facts .serif { font-size: clamp(26px, 3vw, 40px); display: block; }
+.about-facts small {
+  font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase;
+  color: var(--indigo);
+}
+
+/* ============================================================
+   Scroll reveal
+   ============================================================ */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity .8s var(--ease), transform .8s var(--ease);
+}
+.reveal.is-in { opacity: 1; transform: translateY(0); }
+.reveal[data-delay="1"] { transition-delay: .12s; }
+.reveal[data-delay="2"] { transition-delay: .24s; }
+.reveal[data-delay="3"] { transition-delay: .36s; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  :root {
+    --slide-dur: 400ms;
+    --slide-ease: ease;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  .reveal { opacity: 1; transform: none; }
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+
+@media (max-width: 1024px) {
+  .plp-grid { grid-template-columns: repeat(3, 1fr); }
+  .editorial-row { grid-template-columns: repeat(4, 1fr); }
+  .pdp { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --header-h-tall: 68px;
+    --header-h-compact: 56px;
+    --logo-h-tall: 40px;
+    --logo-h-compact: 32px;
+  }
+  .menu-toggle .label { display: none; }
+  .header-contact { display: none; }
+  .search-toggle { display: none !important; } /* declutter mobile header */
+
+  .menu-overlay__inner { grid-template-columns: 1fr; gap: 20px; }
+  .menu-secondary { min-height: 0; }
+
+  .editorial-row { grid-template-columns: repeat(2, 1fr); }
+  .slide--editorial { padding-bottom: 8vh; }
+
+  /* Hero on phones uses the same full-screen slideshow as desktop (one photo
+     fills the screen) — the old thin horizontal bands cropped the photos badly. */
+
+  /* Hero Shop + arrow: gentler 1.25x on phones so they don't dominate */
+  .hero-content .u-link {
+    font-size: 15px;
+    padding: 11px 14px;
+  }
+  .hero-content .u-link::after {
+    left: 14px; right: 14px;
+    bottom: 11px;
+    height: 1.25px;
+  }
+  .scroll-hint { --bob-amp: 7.5px; }
+  .scroll-hint svg {
+    width: 17.5px; height: 25px;   /* 14x20 * 1.25 */
+    stroke-width: 0.96;            /* 1.2 / 1.25 */
+  }
+
+  .plp-grid { grid-template-columns: repeat(2, 1fr); }
+  .plp-subheader { padding-top: 4px; padding-bottom: 4px; }
+
+  .pdp { grid-template-columns: 1fr; }
+  .pdp-panel {
+    position: static;
+    min-height: 0;
+    padding: 40px clamp(20px, 5vw, 40px) 60px;
+  }
+  .pdp-gallery__dots { display: none; }
+
+  .footer-grid { grid-template-columns: repeat(2, 1fr); }
+  .about-row { grid-template-columns: 1fr; }
+  .about-row--flip .about-row__media { order: 0; }
+  .about-row__media { min-height: 42vh; }
+  .about-facts { grid-template-columns: 1fr; }
+  .about-facts div { border-right: 0; border-bottom: 1px solid var(--hairline); padding: 5vh 20px; }
+  .about-facts div:last-child { border-bottom: 0; }
+
+  .slide-dots { display: none; }
+}
+
+@media (max-width: 480px) {
+  .plp-grid { grid-template-columns: repeat(2, 1fr); }
+  .plp-grid .card__info { padding: 10px 8px 16px; }
+  .card__name { font-size: 14px; }
+  .editorial-row { grid-template-columns: 1fr; gap: 8px; }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 22px; }
+  .hero-figures span { width: 22vw; }
+}
+
+/* ============================================================
+   Page entry / navigation veil
+   ============================================================ */
+html.veil-lock, html.veil-lock body { overflow: hidden; }
+
+.page-veil {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--cream);
+  opacity: 0; visibility: hidden;
+  pointer-events: none;
+  transition: opacity 500ms cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 500ms;
+}
+.page-veil.is-shown {
+  opacity: 1; visibility: visible;
+  pointer-events: auto;
+  transition: opacity 500ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.page-veil.is-revealing {
+  opacity: 0; visibility: visible; pointer-events: none;
+  transition: opacity 700ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.page-veil__inner {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%;
+}
+.page-veil__emblem { display: none; height: clamp(64px, 12vh, 132px); width: auto; }
+.page-veil__name {
+  display: none;
+  font-family: var(--font-serif); font-weight: 500;
+  color: var(--blue);
+  font-size: clamp(40px, 8vw, 120px);
+  line-height: 1.05; letter-spacing: 0.03em;
+  text-align: center; padding: 0 6vw;
+}
+/* Content does NOT animate on its own — it simply fades with the veil, so each
+   page plays exactly one motion (cover on leave, reveal on arrive) instead of a
+   separate slide-in that replays across the navigation. */
+.page-veil.is-name .page-veil__name { display: block; }
+.page-veil.is-emblem .page-veil__emblem {
+  display: block;
+  opacity: 0;
+  transform: scale(0.98);
+  transition: opacity 700ms cubic-bezier(0.4, 0, 0.2, 1),
+              transform 900ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* the emblem settles in once, only after its image has decoded (js adds .is-ready) */
+.page-veil.is-emblem.is-ready .page-veil__emblem { opacity: 1; transform: none; }

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Šaty & Sukně — LAVRÉE studio</title>
+  <meta name="description" content="Šaty & Sukně by LAVRÉE studio. Handmade in Prague, preorder via Instagram, worldwide shipping.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Jost:wght@300;400;500&family=Pinyon+Script&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <main data-plp="saty-sukne" style="padding-top:var(--header-h-tall)">
+    <div class="plp-subheader">
+      <div class="plp-subheader__left">
+        <h1 class="plp-title">Šaty &amp; Sukně</h1>
+        <nav class="plp-subs" data-plp-subs aria-label="Subcategories"></nav>
+      </div>
+      <div class="plp-tools">
+        <button data-panel-toggle="filters" aria-expanded="false">Filters</button>
+        <button data-panel-toggle="sort" aria-expanded="false">Sort by: Suggested</button>
+      </div>
+    </div>
+
+    <div class="plp-panel" data-panel="filters">
+      <div class="plp-panel__inner">
+        <div class="plp-panel__group">
+          <h4>Color</h4>
+          <label><input type="checkbox"> Cream</label>
+          <label><input type="checkbox"> Navy</label>
+          <label><input type="checkbox"> Black</label>
+        </div>
+        <div class="plp-panel__group">
+          <h4>Size</h4>
+          <label><input type="checkbox"> XS – S</label>
+          <label><input type="checkbox"> M – L</label>
+          <label><input type="checkbox"> XL</label>
+        </div>
+        <div class="plp-panel__group">
+          <h4>Price</h4>
+          <label><input type="checkbox"> Under 1 000 kč</label>
+          <label><input type="checkbox"> 1 000 – 1 400 kč</label>
+          <label><input type="checkbox"> Over 1 400 kč</label>
+        </div>
+      </div>
+    </div>
+    <div class="plp-panel" data-panel="sort">
+      <div class="plp-panel__inner">
+        <div class="plp-panel__group">
+          <h4>Sort by</h4>
+          <label><input type="radio" name="sort" checked> Suggested</label>
+          <label><input type="radio" name="sort"> Price, low to high</label>
+          <label><input type="radio" name="sort"> Price, high to low</label>
+          <label><input type="radio" name="sort"> Newest</label>
+        </div>
+      </div>
+    </div>
+
+    <section class="plp-grid" data-plp-grid aria-label="Products"></section>
+  </main>
+
+  <div data-footer></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/plp.js"></script>
+</body>
+</html>
