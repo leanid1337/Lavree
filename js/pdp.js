@@ -36,26 +36,58 @@
       }).join("");
     }
 
-    /* gallery dots */
+    /* gallery: one photo at a time — dots, arrows, arrow keys and swipe switch
+       between them, so the page no longer has to be scrolled through the stack */
+    var gallery = root.querySelector(".pdp-gallery");
     var dotsWrap = document.querySelector("[data-pdp-dots]");
     var shots = Array.prototype.slice.call(stack.querySelectorAll(".pdp-shot"));
     dotsWrap.innerHTML = shots.map(function (_, i) {
       return '<button aria-label="Photo ' + (i + 1) + ", " + labels[i] + '"></button>';
     }).join("");
     var dots = Array.prototype.slice.call(dotsWrap.querySelectorAll("button"));
+
+    var index = 0;
+    function show(i) {
+      index = (i + shots.length) % shots.length; /* the ends wrap around */
+      shots.forEach(function (s, k) {
+        s.classList.toggle("is-active", k === index);
+        s.setAttribute("aria-hidden", k === index ? "false" : "true");
+      });
+      dots.forEach(function (d, k) { d.classList.toggle("is-active", k === index); });
+    }
+    show(0);
+
     dots.forEach(function (d, i) {
-      d.addEventListener("click", function () {
-        shots[i].scrollIntoView({ behavior: "smooth", block: "center" });
-      });
+      d.addEventListener("click", function () { show(i); });
     });
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) {
-        if (!en.isIntersecting) return;
-        var idx = shots.indexOf(en.target);
-        dots.forEach(function (d, i) { d.classList.toggle("is-active", i === idx); });
+    var prev = document.querySelector("[data-pdp-prev]");
+    var next = document.querySelector("[data-pdp-next]");
+    if (prev) prev.addEventListener("click", function () { show(index - 1); });
+    if (next) next.addEventListener("click", function () { show(index + 1); });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      var t = e.target; /* not always an element — a synthetic event targets document */
+      if (t && t.closest && t.closest("input, textarea, select, [contenteditable]")) return;
+      if (document.querySelector(".modal.is-open, .menu-overlay.is-open")) return;
+      show(index + (e.key === "ArrowRight" ? 1 : -1));
+    });
+
+    /* swipe: horizontal only, so a vertical scroll of the page is left alone */
+    if (gallery) {
+      var swipe = null;
+      gallery.addEventListener("touchstart", function (e) {
+        swipe = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }, { passive: true });
+      gallery.addEventListener("touchend", function (e) {
+        if (!swipe) return;
+        var dx = e.changedTouches[0].clientX - swipe.x;
+        var dy = e.changedTouches[0].clientY - swipe.y;
+        swipe = null;
+        if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+        show(index + (dx < 0 ? 1 : -1));
       });
-    }, { threshold: 0.55 });
-    shots.forEach(function (s) { io.observe(s); });
+    }
 
     /* wishlist */
     var wish = document.querySelector("[data-pdp-wish]");

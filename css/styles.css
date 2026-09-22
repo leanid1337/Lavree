@@ -861,40 +861,72 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
   padding-top: var(--header-h-tall); /* static: page layout must not shift on compact toggle */
 }
 
-.pdp-gallery { position: relative; background: var(--blue); }
-.pdp-gallery__stack { display: flex; flex-direction: column; gap: 2px; }
-/* each shot fits one screen (below the header) so a whole photo is visible;
-   the portrait image is shown in full (contain), centred on the brand-blue ground. */
-.pdp-shot {
-  position: relative;
-  height: calc(100dvh - var(--header-h-tall));
-  overflow: hidden;
+/* The gallery shows one photo at a time — arrows, dots, arrow keys and swipe
+   switch between them — and holds a single screen instead of a scroll stack. */
+.pdp-gallery {
+  position: sticky;
+  top: var(--header-h);
+  height: calc(100dvh - var(--header-h));
+  display: flex; align-items: center; justify-content: center;
+  padding: clamp(18px, 4vh, 52px) clamp(46px, 5vw, 84px);
   background: var(--blue);
+  overflow: hidden;
+  transition: top var(--header-anim), height var(--header-anim);
 }
-.pdp-shot__img {
-  position: absolute; inset: 0;
+/* every shot sits in the same box; only the active one is faded in */
+.pdp-gallery__stack {
+  position: relative;
   width: 100%; height: 100%;
-  object-fit: cover; /* fill the whole shot, no empty ground */
+}
+.pdp-shot {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .55s var(--ease);
+}
+.pdp-shot.is-active { opacity: 1; pointer-events: auto; }
+/* contain, not cover: the photo is shown whole, at a calm size on the blue
+   ground, rather than blown up to fill the column */
+.pdp-shot__img {
+  width: auto; height: auto;
+  max-width: 100%;
+  max-height: min(100%, 68vh);
+  object-fit: contain;
+}
+
+.pdp-nav {
+  position: absolute; top: 50%; z-index: 5;
+  transform: translateY(-50%);
+  width: 46px; height: 46px;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0.55;
+  transition: opacity .3s var(--ease);
+}
+.pdp-nav:hover { opacity: 1; }
+.pdp-nav--prev { left: clamp(2px, 0.8vw, 14px); }
+.pdp-nav--next { right: clamp(2px, 0.8vw, 14px); }
+.pdp-nav svg {
+  width: 22px; height: 22px;
+  fill: none; stroke: #fff; stroke-width: 1.1;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 4px rgba(32, 32, 31, 0.5));
 }
 
 .pdp-gallery__dots {
-  position: sticky;
-  top: 50%;
-  float: left;
-  width: 0;                 /* reserve no width, so the photo fills edge-to-edge */
-  transform: translateY(-50%);
-  z-index: 5;
-  display: flex; flex-direction: column; gap: 10px;
+  position: absolute; left: 0; right: 0;
+  bottom: clamp(10px, 2vh, 22px);
+  z-index: 6;
+  display: flex; justify-content: center; gap: 2px;
 }
 .pdp-gallery__dots button {
   width: 20px; height: 20px;
-  margin-left: clamp(8px, 1.4vw, 20px); /* inset the dots as an overlay, not a gutter */
   display: flex; align-items: center; justify-content: center;
 }
 .pdp-gallery__dots button::before {
   content: ""; width: 5px; height: 5px; border-radius: 50%;
   background: #fff; opacity: .55; /* light dots readable over any photo */
-  box-shadow: 0 0 4px rgba(32, 32, 31, 0.45);
+  box-shadow: 0 0 5px rgba(32, 32, 31, 0.65); /* readable where the dots lie on a pale photo */
   transition: opacity .3s var(--ease), transform .3s var(--ease);
 }
 .pdp-gallery__dots button.is-active::before { opacity: 1; transform: scale(1.4); }
@@ -1368,16 +1400,25 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
   .plp-subheader { padding-top: 4px; padding-bottom: 4px; }
 
   .pdp { grid-template-columns: 1fr; }
-  /* One shot per screen only works while the gallery column is about as wide
-     as it is tall. On a phone it cropped the 1484x1160 photos to a ~2.5x
-     zoomed sliver, so here each shot keeps the photo's own proportions. */
-  .pdp-shot { height: auto; aspect-ratio: 1484 / 1160; }
+  /* A screen-tall frame would crop these landscape photos to a zoomed sliver on
+     a phone, so the frame takes the photo's own proportions and the arrows sit
+     over it rather than beside it. */
+  .pdp-gallery {
+    position: relative; /* still the anchor for the dots, arrows and wish button */
+    top: auto;
+    height: auto;
+    padding: 0; /* no blue band under the photo — the dots ride on it instead */
+  }
+  .pdp-gallery__stack { height: auto; aspect-ratio: 1484 / 1160; }
+  .pdp-gallery__dots { bottom: 10px; }
+  .pdp-shot__img { max-height: 100%; }
+  .pdp-nav--prev { left: 0; }
+  .pdp-nav--next { right: 0; }
   .pdp-panel {
     position: static;
     min-height: 0;
     padding: 40px clamp(20px, 5vw, 40px) 60px;
   }
-  .pdp-gallery__dots { display: none; }
 
   .footer-grid { grid-template-columns: repeat(2, 1fr); }
   .about-row { grid-template-columns: 1fr; }
