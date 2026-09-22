@@ -25,6 +25,7 @@ LAVREE.PRODUCTS = [
   {
     id: "kalhoty-flow",
     photo: "photo/Product/web/kalhoty-flow.jpg",
+    video: "Video/Product/web/kalhoty.mp4",
     gallery: [
       { src: "photo/Product/web/kalhoty-flow/front.jpg", label: "Front" },
       { src: "photo/Product/web/kalhoty-flow/back.jpg", label: "Back" },
@@ -46,6 +47,7 @@ LAVREE.PRODUCTS = [
   {
     id: "sortky-muse",
     photo: "photo/Product/web/sortky-muse.jpg",
+    video: "Video/Product/web/sortky.mp4",
     gallery: [
       { src: "photo/Product/web/sortky-muse/front.jpg", label: "Front" },
       { src: "photo/Product/web/sortky-muse/back.jpg", label: "Back" },
@@ -67,6 +69,7 @@ LAVREE.PRODUCTS = [
   {
     id: "prodlouzeny-top-aura",
     photo: "photo/Product/web/prodlouzeny-top-aura.jpg",
+    video: "Video/Product/web/topy.mp4",
     gallery: [
       { src: "photo/Product/web/prodlouzeny-top-aura/front.jpg", label: "Front" },
       { src: "photo/Product/web/prodlouzeny-top-aura/back.jpg", label: "Back" },

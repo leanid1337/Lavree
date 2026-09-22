@@ -642,6 +642,19 @@ body:not(.page-home) .search-toggle { display: inline-flex; }
 }
 .card:hover .card__photo { transform: scale(1.03); }
 
+/* Hover clip (home editorial). It sits over the photo and only becomes visible
+   once it is really playing, so a slow start never shows an empty frame; when
+   the clip ends js drops .is-playing and the photo is simply there again. */
+.card__video {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .45s var(--ease);
+}
+.card.is-playing .card__video { opacity: 1; }
+
 .card__wish {
   position: absolute; top: 6px; right: 6px; z-index: 3;
   width: 44px; height: 44px;

@@ -392,7 +392,9 @@
   }
 
   /* ---------- product card markup (shared) ---------- */
-  L.cardHTML = function (p) {
+  /* opts.video: render the hover clip as well (home editorial only — the PLP
+     grids pass the map index here, which has no .video, so they stay photo-only). */
+  L.cardHTML = function (p, opts) {
     var swatches = p.colors.map(function (c) {
       return '<i style="background:' + (L.SWATCHES[c] || "#EFE9DB") + '" title="' + c + '"></i>';
     }).join("");
@@ -409,6 +411,10 @@
                   '" loading="lazy" decoding="async">'
               : L.placeholder(p.name, p.tone, "ph--main") +
                 L.placeholder(p.name, p.toneAlt, "ph--alt")) +
+            (opts && opts.video && p.video
+              ? '<video class="card__video" muted playsinline preload="none" ' +
+                  'aria-hidden="true" tabindex="-1" data-src="' + p.video + '"></video>'
+              : "") +
           "</div>" +
           '<div class="card__info">' +
             '<h3 class="card__name">' + p.name + "</h3>" +

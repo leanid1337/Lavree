@@ -11,8 +11,47 @@
     /* Editorial row: first 4 products */
     var row = document.querySelector("[data-editorial-row]");
     if (row) {
-      row.innerHTML = L.PRODUCTS.slice(0, 4).map(L.cardHTML).join("");
+      row.innerHTML = L.PRODUCTS.slice(0, 4).map(function (p) {
+        return L.cardHTML(p, { video: true });
+      }).join("");
     }
+
+    /* Editorial cards: the products that have a clip play it on hover and hand
+       the photo back the moment it ends. Pointer devices only — nothing is
+       fetched until the cursor actually arrives, and never on a touch screen,
+       where there is no hover to start it. */
+    (function initCardVideos() {
+      if (!row) return;
+      if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+      Array.prototype.forEach.call(row.querySelectorAll(".card__video"), function (v) {
+        var card = v.closest(".card");
+        if (!card) return;
+        var spent = false; /* one run per hover: after it ends, the photo stays */
+
+        v.muted = true;
+        v.addEventListener("playing", function () { card.classList.add("is-playing"); });
+        v.addEventListener("ended", function () {
+          spent = true;
+          card.classList.remove("is-playing");
+        });
+
+        card.addEventListener("pointerenter", function () {
+          if (spent) return;
+          if (!v.getAttribute("src")) v.setAttribute("src", v.getAttribute("data-src"));
+          if (v.readyState > 0) { try { v.currentTime = 0; } catch (e) {} }
+          var play = v.play();
+          if (play && play.catch) play.catch(function () {}); /* autoplay blocked: photo stays */
+        });
+        card.addEventListener("pointerleave", function () {
+          spent = false;
+          card.classList.remove("is-playing");
+          v.pause();
+          if (v.readyState > 0) { try { v.currentTime = 0; } catch (e) {} }
+        });
+      });
+    })();
 
     /* Hero slideshow: one photo full-screen, cross-fading through the set.
        Autoplay pauses on hover so the filtered->plain reveal isn't cut off,
