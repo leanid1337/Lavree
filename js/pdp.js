@@ -22,9 +22,14 @@
     if (p.gallery && p.gallery.length) {
       labels = p.gallery.map(function (g) { return g.label; });
       stack.innerHTML = p.gallery.map(function (g, i) {
+        var lazy = i === 0 ? "" : ' loading="lazy"';
         return '<figure class="pdp-shot" role="img" aria-label="' + p.name + " — " + g.label + '">' +
+          /* same file, blurred and scaled up: fills the frame around the photo
+             instead of leaving a bare blue field on a wide screen */
+          '<img class="pdp-shot__bg" src="' + g.src + '" alt="" aria-hidden="true"' +
+          lazy + ' decoding="async">' +
           '<img class="pdp-shot__img" src="' + g.src + '" alt="' + p.name + " — " + g.label +
-          '"' + (i === 0 ? "" : ' loading="lazy"') + ' decoding="async">' +
+          '"' + lazy + ' decoding="async">' +
           "</figure>";
       }).join("");
     } else {
