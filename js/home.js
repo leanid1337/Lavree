@@ -133,9 +133,22 @@
       requestAnimationFrame(frame);
     }
 
-    function goTo(index) {
+    function goTo(index, fromBelow) {
       index = Math.max(0, Math.min(slides.length - 1, index));
-      animateTo(slideTop(slides[index]));
+      var top = slideTop(slides[index]);
+      /* Coming back up into a slide that is taller than the screen: land on its
+         last screen, not on its start, or a swipe up would skip its content. */
+      if (fromBelow && overflows(index)) {
+        top += slides[index].offsetHeight - slider.clientHeight;
+      }
+      animateTo(top);
+    }
+
+    /* A slide can be taller than one screen — the stacked mobile editorial runs
+       ~3 of them. Those are handled specially: mandatory snap is switched off
+       while one is on screen, and the finger scrolls it natively. */
+    function overflows(index) {
+      return slides[index].offsetHeight - slider.clientHeight > 4;
     }
 
     /* One gesture = one step. A slide that is MEANINGFULLY taller than the
@@ -149,12 +162,18 @@
       var curTop = slideTop(cur);
       var curBottom = curTop + cur.offsetHeight;
       var walkable = cur.offsetHeight - vh > vh * 0.5; /* only slides much taller than a screen (e.g. mobile stacked editorial) */
-      if (walkable && dir > 0 && st + vh < curBottom - 4) {
+      var rest = vh * 0.25; /* a sliver left at either end is not worth a whole gesture */
+      if (walkable && dir > 0 && st + vh < curBottom - rest) {
         animateTo(Math.min(curBottom - vh, st + vh));
-      } else if (walkable && dir < 0 && st > curTop + 4) {
+      } else if (walkable && dir < 0 && st > curTop + rest) {
         animateTo(Math.max(curTop, st - vh));
+      } else if (dir > 0 && currentIndex === slides.length - 1) {
+        /* Last slide: show its tail (the footer runs a little past one screen),
+           then stay put — stepping "past" it would only scroll back to its top. */
+        var end = slider.scrollHeight - vh;
+        if (st < end - 4) animateTo(end);
       } else {
-        goTo(currentIndex + dir);
+        goTo(currentIndex + dir, dir < 0);
       }
     }
 
@@ -165,10 +184,26 @@
       step(e.deltaY > 0 ? 1 : -1);
     }, { passive: false });
 
-    /* touch: vertical swipes drive the slider; horizontal ones are left alone */
-    var touchStart = null;
+    /* touch: vertical swipes drive the slider; horizontal ones are left alone.
+       Inside a slide taller than the screen the finger scrolls it natively
+       (with momentum) — forcing one swipe per screen there made the long
+       mobile editorial feel stuck. */
+    var touchStart = null, nativeScroll = false;
+
+    /* Room left to scroll inside the current slide in this direction? */
+    function canScrollInside(dir) {
+      if (lock || !overflows(currentIndex)) return false;
+      var cur = slides[currentIndex];
+      var top = slideTop(cur);
+      var st = slider.scrollTop;
+      return dir > 0
+        ? st + slider.clientHeight < top + cur.offsetHeight - 1
+        : st > top + 1;
+    }
+
     slider.addEventListener("touchstart", function (e) {
       interacted = true;
+      nativeScroll = false;
       touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     }, { passive: true });
     slider.addEventListener("touchmove", function (e) {
@@ -176,6 +211,7 @@
       var dx = e.touches[0].clientX - touchStart.x;
       var dy = e.touches[0].clientY - touchStart.y;
       if (Math.abs(dx) > Math.abs(dy)) return; /* horizontal gesture */
+      if (canScrollInside(dy < 0 ? 1 : -1)) { nativeScroll = true; return; }
       e.preventDefault();
     }, { passive: false });
     slider.addEventListener("touchend", function (e) {
@@ -183,6 +219,7 @@
       var dx = e.changedTouches[0].clientX - touchStart.x;
       var dy = touchStart.y - e.changedTouches[0].clientY;
       touchStart = null;
+      if (nativeScroll) { nativeScroll = false; return; } /* the finger moved it already */
       if (lock || Math.abs(dy) < SWIPE || Math.abs(dx) > Math.abs(dy)) return;
       step(dy > 0 ? 1 : -1);
     });
@@ -201,24 +238,43 @@
       });
     });
 
-    /* Active slide tracking: dots, header ink over dark slides */
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) {
-        if (!en.isIntersecting) return;
-        var idx = slides.indexOf(en.target);
-        currentIndex = idx;
-        dots.forEach(function (d, i) { d.classList.toggle("is-active", i === idx); });
-        document.body.classList.toggle("hero-dark", en.target.hasAttribute("data-dark"));
+    /* Active slide tracking: dots, header ink over dark slides.
+       Driven by scroll position, not by an IntersectionObserver: a slide taller
+       than the viewport (the mobile editorial is ~3 screens) can never reach a
+       0.55 ratio, so the observer never reported it — currentIndex stayed on
+       the hero and every further swipe jumped back to that slide's top. */
+    var lastActive = -1;
+    function syncActive() {
+      var probe = slider.scrollTop + slider.clientHeight * 0.5;
+      var idx = 0;
+      for (var i = 0; i < slides.length; i++) {
+        if (slideTop(slides[i]) <= probe + 1) idx = i;
+      }
+      currentIndex = idx;
+      /* Mandatory snap would drag a screen-by-screen walk back to the slide
+         start, so it is off while a taller-than-screen slide is on screen. */
+      slider.classList.toggle("is-free", overflows(idx));
+      if (idx === lastActive) return;
+      lastActive = idx;
+      dots.forEach(function (d, i) { d.classList.toggle("is-active", i === idx); });
+      document.body.classList.toggle("hero-dark", slides[idx].hasAttribute("data-dark"));
 
-        /* search field lives on the hero (first) slide only */
-        var onHero = idx === 0;
-        document.body.classList.toggle("is-hero-slide", onHero);
-        if (!onHero) {
-          var si = document.querySelector("[data-search-bar] input");
-          if (si) si.blur();
-        }
-      });
-    }, { root: slider, threshold: 0.55 });
-    slides.forEach(function (s) { io.observe(s); });
+      /* search field lives on the hero (first) slide only */
+      var onHero = idx === 0;
+      document.body.classList.toggle("is-hero-slide", onHero);
+      if (!onHero) {
+        var si = document.querySelector("[data-search-bar] input");
+        if (si) si.blur();
+      }
+    }
+
+    var ticking = false;
+    slider.addEventListener("scroll", function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () { ticking = false; syncActive(); });
+    }, { passive: true });
+    window.addEventListener("resize", syncActive);
+    syncActive();
   });
 })();

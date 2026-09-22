@@ -469,6 +469,12 @@ body:not(.page-home) .search-toggle { display: inline-flex; }
   scroll-snap-type: none;
   scroll-behavior: auto;
 }
+/* .is-free: a slide taller than the viewport is on screen (stacked mobile
+   editorial). Mandatory snap would pull the scroll straight back to that
+   slide's start, so scrolling inside it is left free — js adds the class. */
+.home-slider.is-free {
+  scroll-snap-type: none;
+}
 .slide {
   min-height: 100dvh;
   scroll-snap-align: start;
@@ -1349,6 +1355,10 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
   .plp-subheader { padding-top: 4px; padding-bottom: 4px; }
 
   .pdp { grid-template-columns: 1fr; }
+  /* One shot per screen only works while the gallery column is about as wide
+     as it is tall. On a phone it cropped the 1484x1160 photos to a ~2.5x
+     zoomed sliver, so here each shot keeps the photo's own proportions. */
+  .pdp-shot { height: auto; aspect-ratio: 1484 / 1160; }
   .pdp-panel {
     position: static;
     min-height: 0;
