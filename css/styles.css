@@ -21,21 +21,29 @@
   --font-script: "Pinyon Script", cursive;
   --font-sans: "Jost", "Inter", "Segoe UI", Arial, sans-serif;
 
-  /* header geometry: tall by default, compact after scroll (+50% larger) */
+  /* header geometry: tall by default, compact after scroll. The logo keeps one
+     rendered height and is compacted with a transform, so a scroll never makes
+     the browser lay the bar out again. */
   --header-h-tall: 144px;
-  --header-h-compact: 96px;
+  --header-h-compact: 112px;
   --header-h: var(--header-h-tall);
-  --logo-h-tall: 90px;
-  --logo-h-compact: 60px;
-  --logo-h: var(--logo-h-tall);
-  --header-anim: 350ms cubic-bezier(0.4, 0, 0.2, 1);
-  --header-fill-anim: 300ms ease;
+  --logo-h: 90px;
+  --logo-scale: 1;
+  --logo-scale-compact: 0.78; /* 90px -> 70px */
+  /* one curve (easeOutQuint) and one length for everything the scroll changes */
+  --header-anim: 600ms cubic-bezier(0.22, 1, 0.36, 1);
+  /* the fill under the cursor waits out a passing mouse before it starts */
+  --header-fill-anim: 400ms ease;
+  --header-fill-delay: 120ms;
   /* slide-to-slide recolor of header + search: long, soft cross-fade so the
      dark<->light change lags the section swap slightly and never jars */
   --header-color-fade: 700ms cubic-bezier(0.4, 0, 0.2, 1);
   --header-color-delay: 150ms;
   --header-border: rgba(44, 64, 102, 0.15);
-  --header-scroll-threshold: 60; /* px, read by js */
+  /* px, read by js: compact switches on past the first and off below the
+     second, so a scroll resting near the edge cannot flip it back and forth */
+  --header-compact-on: 80;
+  --header-compact-off: 20;
   --header-ink: var(--blue);
 
   /* fullscreen slider timing (read by js) */
@@ -45,20 +53,27 @@
   --slide-swipe: 50;     /* px, min touch swipe distance */
 
   --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  /* text pages (FAQ, shipping, size guide, legal) */
+  --doc-measure: 860px;
+
+  /* footer signature line */
+  --footer-sign-gap: 24px;
+  --footer-sign-size: 11px;
+  --footer-sign-track: 0.12em;
+  --footer-sign-name-size: 16px;
+  --footer-sign-dim: 0.6;
+  --footer-sign-name-dim: 0.75;
 }
 
 /* compact header state: js toggles .is-compact on body past the threshold */
 body.is-compact {
   --header-h: var(--header-h-compact);
-  --logo-h: var(--logo-h-compact);
+  --logo-scale: var(--logo-scale-compact);
 }
 
-/* Hovering the header grows ONLY the header bar + logo (+20%). It is a fixed
-   element, so its height change never reflows or scrolls the document, and we
-   deliberately do NOT touch --header-h — the search line and page content stay
-   exactly where they are. (No :has(), which was causing hover-time jank.) */
-.site-header:hover { height: calc(var(--header-h) * 1.2); }
-.site-header:hover .logo { height: calc(var(--logo-h) * 1.2); }
+/* Hovering changes the bar's colour only. It used to grow by 20% as well,
+   which made the header twitch every time the cursor crossed it. */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -138,8 +153,15 @@ h1, h2, h3, .serif {
   border-bottom: 1px solid transparent;
   transition: height var(--header-anim),
               background var(--header-fill-anim),
-              color var(--header-color-fade) var(--header-color-delay),
+              color var(--header-fill-anim),
               border-color var(--header-fill-anim);
+}
+/* the scroll compaction moves height, fill and ink together on one curve */
+body .site-header.header--compact {
+  transition: height var(--header-anim),
+              background var(--header-anim),
+              color var(--header-anim),
+              border-color var(--header-anim);
 }
 
 /* Over a dark slide (hero / Navy Edit) the header sits on a solid black bar
@@ -158,6 +180,15 @@ body .site-header.is-filled {
   --header-ink: var(--blue);
   background: var(--cream);
   border-bottom-color: var(--header-border);
+}
+/* Arriving: the fill waits out a mouse that is only passing through.
+   Leaving: it starts back at once (this rule is only in force on the way in,
+   so the base transition above, with no delay, governs the way out). */
+body .site-header:hover {
+  transition: height var(--header-anim),
+              background var(--header-fill-anim) var(--header-fill-delay),
+              color var(--header-fill-anim) var(--header-fill-delay),
+              border-color var(--header-fill-anim) var(--header-fill-delay);
 }
 
 .header-left, .header-right {
@@ -182,13 +213,18 @@ body .site-header.is-filled {
 .menu-toggle:hover .burger span:last-child { transform: translateY(1px); }
 
 /* Logo: two stacked images cross-faded by opacity (no src swap) */
+/* The logo is always laid out at its full height and shrunk with a transform:
+   animating its height would put the whole bar through layout on every frame. */
 .logo {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   height: var(--logo-h);
-  transition: height var(--header-anim);
+  transform: scale(var(--logo-scale));
+  transform-origin: center;
+  will-change: transform;
+  transition: transform var(--header-anim);
 }
 .logo__img {
   height: 100%;
@@ -1241,6 +1277,41 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
 .newsletter.is-done form { display: none; }
 .newsletter.is-done .newsletter__ok { display: block; }
 
+/* ---------- signature line ---------- */
+.footer-sign {
+  display: flex; flex-wrap: wrap;
+  align-items: baseline; justify-content: space-between;
+  gap: 10px clamp(16px, 3vw, 40px);
+  margin-top: var(--footer-sign-gap);
+  padding-top: var(--footer-sign-gap);
+  border-top: 1px solid var(--hairline-soft);
+}
+.footer-sign__note {
+  font-family: var(--font-sans); font-weight: 300;
+  font-size: var(--footer-sign-size);
+  letter-spacing: var(--footer-sign-track);
+  text-transform: uppercase;
+  color: var(--blue);
+  opacity: var(--footer-sign-dim);
+}
+/* the two halves are dimmed separately: nesting one inside a dimmed parent
+   could only ever make it fainter, never the 0.75 the name wants */
+.footer-sign__credit {
+  display: inline-flex; align-items: baseline; gap: 8px;
+}
+.footer-sign__name {
+  font-family: var(--font-script);
+  font-size: var(--footer-sign-name-size);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--blue);
+  opacity: var(--footer-sign-name-dim);
+}
+.footer-sign__note,
+.footer-sign__name { transition: opacity 300ms var(--ease); }
+.footer-sign__credit:hover .footer-sign__note,
+.footer-sign__credit:hover .footer-sign__name { opacity: 1; }
+
 .country-switch {
   font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
   display: inline-flex; align-items: center; gap: 8px;
@@ -1406,11 +1477,21 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
   :root {
     --slide-dur: 400ms;
     --slide-ease: ease;
+    /* the header still changes state, it just does it plainly and at once */
+    --header-anim: 150ms linear;
+    --header-fill-anim: 150ms linear;
+    --header-fill-delay: 0ms;
+    --logo-scale-compact: 1;
   }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+  /* the blanket rule above would make the header snap between states; it is
+     the one element allowed a short ease so the change does not read as a
+     glitch. No scale either way — the logo keeps its size. */
+  .site-header,
+  .site-header .logo { transition-duration: 150ms !important; }
   .reveal { opacity: 1; transform: none; }
 }
 
@@ -1427,13 +1508,27 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
 @media (max-width: 768px) {
   :root {
     --header-h-tall: 68px;
-    --header-h-compact: 56px;
-    --logo-h-tall: 40px;
-    --logo-h-compact: 32px;
+    --header-h-compact: 58px;
+    --logo-h: 40px;
+    --logo-scale-compact: 0.82; /* 40px -> ~33px */
   }
   .menu-toggle .label { display: none; }
   .header-contact { display: none; }
+
+  /* the two groups sit at the edges and the logo is centred on the screen,
+     not on whatever space they happen to leave between them */
+  .site-header { grid-template-columns: 1fr 1fr; }
+  .logo {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%) scale(var(--logo-scale));
+  }
+
+  .footer-sign { flex-direction: column; align-items: center; text-align: center; }
   .search-toggle { display: none !important; } /* declutter mobile header */
+  /* three 44px targets on the right would reach under the centred logo;
+     the account link only points at About, which the menu already carries */
+  .header-right > [aria-label="Account"] { display: none; }
 
   .menu-overlay__inner { grid-template-columns: 1fr; gap: 20px; }
   .menu-secondary { min-height: 0; }
@@ -1506,6 +1601,103 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
   .footer-grid { grid-template-columns: 1fr 1fr; gap: 22px; }
   .hero-figures span { width: 22vw; }
 }
+
+/* ============================================================
+   Text pages (FAQ, shipping, size guide, legal)
+   ============================================================ */
+
+.doc { padding-top: var(--header-h-tall); }
+.doc-hero {
+  min-height: 42dvh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 10vh clamp(20px, 6vw, 80px) 7vh;
+  background: var(--milk);
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.doc-hero h1 {
+  font-size: clamp(30px, 4.2vw, 54px);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  max-width: 18ch;
+}
+.doc-hero__sub {
+  margin-top: 18px;
+  font-size: 12px; letter-spacing: 0.26em; text-transform: uppercase;
+  color: var(--indigo);
+}
+
+.doc-body {
+  max-width: var(--doc-measure);
+  margin: 0 auto;
+  padding: clamp(40px, 8vh, 90px) clamp(20px, 5vw, 40px) clamp(60px, 11vh, 130px);
+  display: flex; flex-direction: column;
+  gap: clamp(32px, 5vh, 54px);
+}
+/* the header is fixed, so an anchor has to stop short of it */
+.doc-block { scroll-margin-top: calc(var(--header-h-tall) + 24px); }
+.doc-block + .doc-block {
+  border-top: 1px solid var(--hairline-soft);
+  padding-top: clamp(32px, 5vh, 54px);
+}
+.doc-block h2 {
+  font-size: clamp(22px, 2.4vw, 31px);
+  letter-spacing: 0.06em;
+  margin-bottom: 16px;
+}
+.doc-block h3 {
+  font-family: var(--font-serif);
+  font-size: 20px; font-weight: 500; color: var(--indigo);
+  letter-spacing: 0.04em;
+  margin: 24px 0 8px;
+}
+.doc-block p,
+.doc-block li {
+  font-size: 16px; line-height: 1.85;
+  color: var(--ink);
+  max-width: 62ch;
+}
+.doc-block p + p { margin-top: 14px; }
+.doc-block ul { list-style: none; margin-top: 10px; }
+.doc-block li { position: relative; padding-left: 20px; margin-top: 8px; }
+.doc-block li::before {
+  content: "";
+  position: absolute; left: 2px; top: 0.85em;
+  width: 8px; height: 1px;
+  background: var(--hairline);
+}
+.doc-block strong { font-weight: 500; color: var(--blue); }
+.doc-link {
+  color: var(--blue);
+  border-bottom: 1px solid var(--hairline);
+  transition: color .25s var(--ease), border-color .25s var(--ease);
+}
+.doc-link:hover { color: var(--bordeaux); border-bottom-color: var(--bordeaux); }
+.doc-note {
+  font-size: 13px; font-style: italic;
+  color: var(--indigo); opacity: 0.8;
+  margin-top: 14px;
+}
+
+.doc-table-wrap { overflow-x: auto; margin-top: 18px; }
+.doc-table {
+  width: 100%; min-width: 460px;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+.doc-table th,
+.doc-table td {
+  text-align: left;
+  padding: 12px 14px 12px 0;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.doc-table th {
+  font-family: var(--font-sans); font-weight: 400;
+  font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--blue);
+}
+.doc-table td:first-child { color: var(--blue); }
 
 /* ============================================================
    Page entry / navigation veil

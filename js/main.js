@@ -242,6 +242,29 @@
     { label: "About", href: "about.html" }
   ];
 
+  /* A category page with nothing on it is a dead end, so the menu is filtered
+     against the catalogue rather than kept in step by hand. Entries that are
+     not catalogue pages (Lookbook, About) are left alone. */
+  function hrefCat(href) { return href.replace(/#.*$/, "").replace(/\.html$/, ""); }
+  function hrefSub(href) { var i = href.indexOf("#"); return i < 0 ? "" : href.slice(i + 1); }
+  function stocked(href) {
+    var cat = hrefCat(href);
+    if (!L.CATEGORIES[cat]) return true;
+    if (L.countInCategory(cat) === 0) return false;
+    var sub = hrefSub(href);
+    return !sub || L.countInSub(cat, sub) > 0;
+  }
+  MENU = MENU.filter(function (item) { return stocked(item.href); })
+    .map(function (item) {
+      if (!item.subs) return item;
+      var kept = item.subs.filter(function (sub) { return stocked(sub.href); });
+      return {
+        label: item.label,
+        href: item.href,
+        subs: kept.length > 1 ? kept : [] /* nothing but "View all" is not a list */
+      };
+    });
+
   /* ---------- header ---------- */
   function buildHeader() {
     var html =
@@ -309,34 +332,42 @@
             '<li><a href="https://www.instagram.com/lavree.studio/" target="_blank" rel="noopener">Chat via DM</a></li>' +
           '</ul></div>' +
           '<div class="footer-col"><h4>Support</h4><ul>' +
-            '<li><a href="about.html">Preorder info</a></li>' +
-            '<li><a href="about.html">FAQs</a></li>' +
-            '<li><a href="about.html">Returns</a></li>' +
-            '<li><a href="about.html">Size guide</a></li>' +
+            '<li><a href="shipping-returns.html">Preorder info</a></li>' +
+            '<li><a href="faq.html">FAQs</a></li>' +
+            '<li><a href="shipping-returns.html#returns">Returns</a></li>' +
+            '<li><a href="size-guide.html">Size guide</a></li>' +
           '</ul></div>' +
           '<div class="footer-col"><h4>Company</h4><ul>' +
             '<li><a href="about.html">About LAVRÉE</a></li>' +
-            '<li><a href="about.html">Sustainability</a></li>' +
+            '<li><a href="about.html#lookbook">Lookbook</a></li>' +
             '<li><a href="about.html">Handmade in Czechia</a></li>' +
           '</ul></div>' +
           '<div class="footer-col"><h4>Legal</h4><ul>' +
-            '<li><a href="about.html">Legal notice</a></li>' +
-            '<li><a href="about.html">Privacy policy</a></li>' +
-            '<li><a href="about.html">Cookie policy</a></li>' +
+            '<li><a href="legal.html#notice">Legal notice</a></li>' +
+            '<li><a href="legal.html#privacy">Privacy policy</a></li>' +
+            '<li><a href="legal.html#cookies">Cookie policy</a></li>' +
           '</ul></div>' +
         '</div>' +
         '<div class="footer-mid">' +
           '<div class="newsletter" data-newsletter>' +
             '<label for="nl-email">Newsletter</label>' +
             '<form novalidate>' +
-              '<input id="nl-email" type="email" placeholder="Your email address" required>' +
+              '<input id="nl-email" type="email" placeholder="Your email address" ' +
+                'autocomplete="email" required aria-describedby="nl-msg">' +
               '<button type="submit">Subscribe</button>' +
             '</form>' +
-            '<p class="newsletter__ok">Thank you. Talk soon.</p>' +
+            '<p class="newsletter__msg" id="nl-msg" role="status" aria-live="polite"></p>' +
           '</div>' +
           '<button class="country-switch" aria-label="Change country and language">' +
             'Czech Republic / English ' + ICONS.chevron +
           '</button>' +
+        '</div>' +
+        '<div class="footer-sign">' +
+          '<p class="footer-sign__note">&copy; 2026 LAVRÉE studio — Based in Prague</p>' +
+          '<p class="footer-sign__credit">' +
+            '<span class="footer-sign__note">creator</span>' +
+            '<span class="footer-sign__name">Lavrieka L.</span>' +
+          '</p>' +
         '</div>' +
         '</div>' + /* /.footer-inner */
         '<div class="footer-wave" aria-hidden="true">' +
@@ -407,8 +438,11 @@
         '<a class="card__link" href="product.html?id=' + p.id + '" aria-label="' + p.name + ", " + L.formatPrice(p.price) + '">' +
           '<div class="card__media">' +
             (p.photo
-              ? '<img class="card__photo" src="' + p.photo + '" alt="' + p.name +
-                  '" loading="lazy" decoding="async">'
+              ? '<picture>' +
+                  '<source srcset="' + L.webp(p.photo) + '" type="image/webp">' +
+                  '<img class="card__photo" src="' + p.photo + '" alt="' + p.name +
+                    '" loading="lazy" decoding="async">' +
+                '</picture>'
               : L.placeholder(p.name, p.tone, "ph--main") +
                 L.placeholder(p.name, p.toneAlt, "ph--alt")) +
             (opts && opts.video && p.video
@@ -429,9 +463,13 @@
   /* ---------- compact header on scroll ---------- */
   function initCompactHeader() {
     var header = document.querySelector(".site-header");
-    var threshold = parseFloat(
-      getComputedStyle(document.documentElement).getPropertyValue("--header-scroll-threshold")
-    ) || 60;
+    var cs = getComputedStyle(document.documentElement);
+    /* Two thresholds, not one: with a single edge a scroll that comes to rest
+       on it flips the class on and off with every pixel of wobble. */
+    var onAt = parseFloat(cs.getPropertyValue("--header-compact-on")) || 80;
+    var offAt = parseFloat(cs.getPropertyValue("--header-compact-off")) || 20;
+    var compact = false;
+    var applied = false;
     /* the homepage scrolls inside the slider, other pages scroll the window */
     var slider = document.querySelector("[data-home-slider]");
     var scroller = slider || window;
@@ -442,7 +480,11 @@
     }
     function apply() {
       ticking = false;
-      var compact = pos() > threshold;
+      var y = pos();
+      var next = compact ? y >= offAt : y > onAt;
+      if (next === compact && applied) return;
+      compact = next;
+      applied = true;
       header.classList.toggle("header--compact", compact);
       document.body.classList.toggle("is-compact", compact);
     }
@@ -592,17 +634,35 @@
       });
     });
 
-    /* newsletter */
+    /* Newsletter: there is nothing behind it yet, so the form never leaves the
+       page — it checks the address and answers in place. */
     var nl = document.querySelector("[data-newsletter]");
     if (nl) {
-      nl.querySelector("form").addEventListener("submit", function (e) {
+      var nlForm = nl.querySelector("form");
+      var nlInput = nl.querySelector("input");
+      var nlMsg = nl.querySelector(".newsletter__msg");
+      var EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+      nlForm.addEventListener("submit", function (e) {
         e.preventDefault();
-        var input = nl.querySelector("input");
-        if (input.value && input.value.indexOf("@") > 0) {
-          nl.classList.add("is-done");
-        } else {
-          input.focus();
+        var value = nlInput.value.trim();
+        if (!EMAIL.test(value)) {
+          nl.classList.add("is-invalid");
+          nlMsg.textContent = "Please enter a valid email address.";
+          nlInput.setAttribute("aria-invalid", "true");
+          nlInput.focus();
+          return;
         }
+        nl.classList.remove("is-invalid");
+        nlInput.removeAttribute("aria-invalid");
+        nl.classList.add("is-done");
+        nlMsg.textContent = "Thank you \u2014 we'll be in touch";
+      });
+      nlInput.addEventListener("input", function () {
+        if (!nl.classList.contains("is-invalid")) return;
+        nl.classList.remove("is-invalid");
+        nlInput.removeAttribute("aria-invalid");
+        nlMsg.textContent = "";
       });
     }
   }

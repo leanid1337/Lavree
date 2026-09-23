@@ -139,6 +139,24 @@ LAVREE.CATEGORIES = {
   }
 };
 
+/* How much is actually in a category / subcategory. The menu and the PLP
+   subnav use these to drop anything empty, so neither keeps its own list. */
+LAVREE.countInCategory = function (catId) {
+  if (catId === "highlights") return LAVREE.PRODUCTS.length;
+  return LAVREE.PRODUCTS.filter(function (p) { return p.category === catId; }).length;
+};
+LAVREE.countInSub = function (catId, subId) {
+  return LAVREE.PRODUCTS.filter(function (p) {
+    return p.category === catId && p.subs.indexOf(subId) !== -1;
+  }).length;
+};
+
+/* Every photo has a WebP twin beside it under the same name. Markup points at
+   the JPG and offers the WebP first, so an old browser still gets a picture. */
+LAVREE.webp = function (src) {
+  return src.replace(/\.(jpe?g|png)$/i, ".webp");
+};
+
 LAVREE.productById = function (id) {
   return LAVREE.PRODUCTS.find(function (p) { return p.id === id; }) || null;
 };

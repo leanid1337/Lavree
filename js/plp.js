@@ -16,7 +16,11 @@
 
     /* subheader subcategory links */
     var subsWrap = document.querySelector("[data-plp-subs]");
-    var links = [{ id: "", label: "View all" }].concat(cat.subs || []);
+    /* a subcategory nobody has anything in is left out, read from the data */
+    var subs = (cat.subs || []).filter(function (sub) {
+      return L.countInSub(catId, sub.id) > 0;
+    });
+    var links = [{ id: "", label: "View all" }].concat(subs);
     subsWrap.innerHTML = links.map(function (s) {
       return '<a href="#' + s.id + '" data-sub="' + s.id + '">' + s.label + "</a>";
     }).join("");
@@ -37,7 +41,7 @@
 
     function currentSub() {
       var h = location.hash.replace("#", "");
-      return (cat.subs || []).some(function (s) { return s.id === h; }) ? h : "";
+      return subs.some(function (s) { return s.id === h; }) ? h : "";
     }
 
     render(currentSub());

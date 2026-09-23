@@ -23,13 +23,18 @@
       labels = p.gallery.map(function (g) { return g.label; });
       stack.innerHTML = p.gallery.map(function (g, i) {
         var lazy = i === 0 ? "" : ' loading="lazy"';
+        var webp = '<source srcset="' + L.webp(g.src) + '" type="image/webp">';
         return '<figure class="pdp-shot" role="img" aria-label="' + p.name + " — " + g.label + '">' +
           /* same file, blurred and scaled up: fills the frame around the photo
              instead of leaving a bare blue field on a wide screen */
-          '<img class="pdp-shot__bg" src="' + g.src + '" alt="" aria-hidden="true"' +
-          lazy + ' decoding="async">' +
-          '<img class="pdp-shot__img" src="' + g.src + '" alt="' + p.name + " — " + g.label +
-          '"' + lazy + ' decoding="async">' +
+          '<picture>' + webp +
+            '<img class="pdp-shot__bg" src="' + g.src + '" alt="" aria-hidden="true"' +
+            lazy + ' decoding="async">' +
+          '</picture>' +
+          '<picture>' + webp +
+            '<img class="pdp-shot__img" src="' + g.src + '" alt="' + p.name + " — " + g.label +
+            '"' + lazy + ' decoding="async">' +
+          '</picture>' +
           "</figure>";
       }).join("");
     } else {
