@@ -72,6 +72,18 @@ body.is-compact {
   --logo-scale: var(--logo-scale-compact);
 }
 
+/* Only the homepage's header changes size, because only there does it start
+   over a photo. Every other page wears the compact bar from the first frame:
+   the height, the logo and the fill are all settled before anything scrolls,
+   so there is no transition left to play badly. */
+body:not(.page-home) {
+  /* --header-h is substituted where it is declared, so redefining only the
+     tall value here would leave the resolved height at :root untouched */
+  --header-h: var(--header-h-compact);
+  --header-h-tall: var(--header-h-compact);
+  --logo-scale: var(--logo-scale-compact);
+}
+
 /* Hovering changes the bar's colour only. It used to grow by 20% as well,
    which made the header twitch every time the cursor crossed it. */
 
@@ -156,12 +168,26 @@ h1, h2, h3, .serif {
               color var(--header-fill-anim),
               border-color var(--header-fill-anim);
 }
-/* Compacting eases the height only. Fading the fill in over the same 600ms
-   left the bar see-through while it ran, with the page sliding through it, so
-   the cream is there from the first frame. */
+/* Compacting off the hero: the height on its own curve, the colours on the
+   site's slower recolor so black does not become cream in one step. Safe to
+   fade here because both ends are opaque — the bar over the hero is solid
+   ink, so nothing of the page shows through it on the way across. */
 body .site-header.header--compact {
-  transition: height var(--header-anim);
+  transition: height var(--header-anim),
+              background var(--header-color-fade),
+              color var(--header-color-fade),
+              border-color var(--header-color-fade);
 }
+
+body:not(.page-home) .site-header {
+  --header-ink: var(--blue);
+  background: var(--cream);
+  border-bottom-color: var(--header-border);
+  transition: none;
+}
+body:not(.page-home) .logo,
+body:not(.page-home) .logo__img,
+body:not(.page-home) .search-bar { transition: none; }
 
 /* Over a dark slide (hero / Navy Edit) the header sits on a solid black bar
    with cream logo + links; hover/compact still override it to the cream state. */
@@ -250,11 +276,11 @@ body .site-header.is-filled .logo__img--blue { opacity: 1; }
 body .site-header:hover .logo__img--cream,
 body .site-header.header--compact .logo__img--cream,
 body .site-header.is-filled .logo__img--cream { opacity: 0; }
-/* The fill snaps when the bar compacts, so the mark swaps with it. Left to
-   cross-fade, both copies sat at half opacity for 200ms and the wordmark
-   washed out over the fresh cream — the mark looked like it had dropped out.
-   Hovering and the slide-to-slide recolor keep the soft cross-fade. */
-body .site-header.header--compact .logo__img { transition: none; }
+/* the two copies of the mark cross-fade on the same curve as the fill they
+   sit on, so the swap reads as one movement */
+body .site-header.header--compact .logo__img {
+  transition: opacity var(--header-color-fade);
+}
 
 .header-contact {
   letter-spacing: 0.14em; text-transform: uppercase;
