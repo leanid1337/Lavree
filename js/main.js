@@ -618,6 +618,43 @@
     io.observe(wave);
   }
 
+  /* ---------- ambient clips (about page) ----------
+     Each block keeps its file in data-src, so nothing is fetched until the
+     block is nearly on screen, and a clip that has scrolled away is paused
+     instead of decoding out of sight. */
+  function initAmbientVideo() {
+    var vids = Array.prototype.slice.call(document.querySelectorAll("video[data-ambient]"));
+    if (!vids.length) return;
+    var still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function load(v) {
+      if (v.getAttribute("src")) return;
+      v.muted = true; /* the attribute alone does not always set the property */
+      v.setAttribute("src", v.getAttribute("data-src"));
+    }
+    if (!("IntersectionObserver" in window)) { vids.forEach(load); return; }
+
+    var near = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        load(en.target);
+        near.unobserve(en.target);
+      });
+    }, { rootMargin: "400px 0px" });
+
+    var onScreen = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        var v = en.target;
+        if (!en.isIntersecting) { v.pause(); return; }
+        if (still) return; /* reduced motion: the first frame stands in for it */
+        var play = v.play();
+        if (play && play.catch) play.catch(function () {}); /* autoplay refused */
+      });
+    }, { threshold: 0.2 });
+
+    vids.forEach(function (v) { near.observe(v); onScreen.observe(v); });
+  }
+
   /* ---------- init ---------- */
   document.addEventListener("DOMContentLoaded", function () {
     buildHeader();
@@ -628,5 +665,6 @@
     updateCounts();
     initReveal();
     initFooterWave();
+    initAmbientVideo();
   });
 })();

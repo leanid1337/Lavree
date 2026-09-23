@@ -1313,7 +1313,26 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
   min-height: 76dvh;
 }
 .about-row--flip .about-row__media { order: 2; }
-.about-row__media { position: relative; min-height: 320px; }
+.about-row__media {
+  position: relative;
+  min-height: 320px;
+  overflow: hidden;
+  background: var(--vanilla); /* stands in until the clip has loaded */
+}
+
+/* full-bleed clip under the opening line */
+.about-band {
+  position: relative;
+  height: min(66dvh, 620px);
+  overflow: hidden;
+  background: var(--vanilla);
+}
+.about-media {
+  position: absolute; inset: 0;
+  display: block;
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
 .about-row__text {
   display: flex; flex-direction: column; justify-content: center;
   padding: 10vh clamp(24px, 5vw, 80px);
@@ -1446,6 +1465,7 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
   .about-row { grid-template-columns: 1fr; }
   .about-row--flip .about-row__media { order: 0; }
   .about-row__media { min-height: 42vh; }
+  .about-band { height: 42vh; }
   .about-facts { grid-template-columns: 1fr; }
   .about-facts div { border-right: 0; border-bottom: 1px solid var(--hairline); padding: 5vh 20px; }
   .about-facts div:last-child { border-bottom: 0; }
