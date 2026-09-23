@@ -222,7 +222,10 @@ body .site-header:hover {
   height: var(--logo-h);
   transform: scale(var(--logo-scale));
   transform-origin: center;
-  will-change: transform;
+  /* deliberately no will-change: a permanent hint keeps the mark on its own
+     composited layer, and the bar behind it is re-rastered on every frame of
+     the height transition, which leaves the layer's patch of background
+     briefly unpainted. The transform is composited while it runs anyway. */
   transition: transform var(--header-anim);
 }
 .logo__img {
@@ -247,6 +250,11 @@ body .site-header.is-filled .logo__img--blue { opacity: 1; }
 body .site-header:hover .logo__img--cream,
 body .site-header.header--compact .logo__img--cream,
 body .site-header.is-filled .logo__img--cream { opacity: 0; }
+/* The fill snaps when the bar compacts, so the mark swaps with it. Left to
+   cross-fade, both copies sat at half opacity for 200ms and the wordmark
+   washed out over the fresh cream — the mark looked like it had dropped out.
+   Hovering and the slide-to-slide recolor keep the soft cross-fade. */
+body .site-header.header--compact .logo__img { transition: none; }
 
 .header-contact {
   letter-spacing: 0.14em; text-transform: uppercase;
