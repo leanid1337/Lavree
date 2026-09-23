@@ -619,41 +619,46 @@
   }
 
   /* ---------- ambient clips (about page) ----------
-     Each block keeps its file in data-src, so nothing is fetched until the
-     block is nearly on screen, and a clip that has scrolled away is paused
-     instead of decoding out of sight. */
+     The files sit in the markup, so they download with the page: fetching one
+     as you approached it meant every block snapped into place under the
+     scroll. A clip fades in once it has a frame to show, and one that has
+     scrolled away is paused rather than left decoding out of sight. */
   function initAmbientVideo() {
     var vids = Array.prototype.slice.call(document.querySelectorAll("video[data-ambient]"));
     if (!vids.length) return;
-    var still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    function load(v) {
-      if (v.getAttribute("src")) return;
+    vids.forEach(function (v) {
       v.muted = true; /* the attribute alone does not always set the property */
-      v.setAttribute("src", v.getAttribute("data-src"));
+      if (v.readyState >= 2) { v.classList.add("is-ready"); return; }
+      v.addEventListener("loadeddata", function () { v.classList.add("is-ready"); });
+    });
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    var MARGIN = 150; /* start a little ahead of the edge, so a clip is already
+                         running by the time its block is properly in view */
+    function apply(v) {
+      var r = v.getBoundingClientRect();
+      var near = r.bottom > -MARGIN && r.top < window.innerHeight + MARGIN;
+      if (!near) { v.pause(); return; }
+      var p = v.play();
+      if (p && p.catch) p.catch(function () {}); /* autoplay refused */
     }
-    if (!("IntersectionObserver" in window)) { vids.forEach(load); return; }
 
-    var near = new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) {
-        if (!en.isIntersecting) return;
-        load(en.target);
-        near.unobserve(en.target);
-      });
-    }, { rootMargin: "400px 0px" });
-
-    var onScreen = new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) {
-        var v = en.target;
-        if (!en.isIntersecting) { v.pause(); return; }
-        load(v); /* a block that starts on screen may be seen before the preloader */
-        if (still) return; /* reduced motion: the first frame stands in for it */
-        var play = v.play();
-        if (play && play.catch) play.catch(function () {}); /* autoplay refused */
-      });
-    }, { threshold: 0.2 });
-
-    vids.forEach(function (v) { near.observe(v); onScreen.observe(v); });
+    /* The observer is only the trigger — the decision is made from the
+       element's own box. An embedded view that reports the document as hidden
+       makes every entry non-intersecting, and trusting that would leave the
+       clips frozen on a page the reader is looking at. */
+    if ("IntersectionObserver" in window) {
+      var onScreen = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) { apply(en.target); });
+      }, { rootMargin: MARGIN + "px 0px", threshold: 0 });
+      vids.forEach(function (v) { onScreen.observe(v); });
+    } else {
+      window.addEventListener("scroll", function () { vids.forEach(apply); }, { passive: true });
+    }
+    document.addEventListener("visibilitychange", function () { vids.forEach(apply); }); /* pick up again on return */
+    vids.forEach(apply);
   }
 
   /* ---------- init ---------- */
