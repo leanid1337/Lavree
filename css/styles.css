@@ -631,7 +631,9 @@ body:not(.page-home) .search-toggle { display: inline-flex; }
 .slide--editorial {
   background: var(--milk);
   justify-content: center;
-  padding: calc(var(--header-h) + 4vh) clamp(20px, 4vw, 60px) 6vh;
+  /* the slide is only ever on screen once the header has compacted, so the
+     clearance is a constant rather than something that eases under the scroll */
+  padding: calc(var(--header-h-compact) + 4vh) clamp(20px, 4vw, 60px) 6vh;
   gap: 4vh;
 }
 .editorial-manifest {
@@ -805,8 +807,9 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
 
 .plp-subheader {
   position: sticky;
-  top: var(--header-h);
-  transition: top var(--header-anim);
+  /* pinned to the tall header: a top that eases with the bar drifts against
+     the scroll for the whole 600ms */
+  top: var(--header-h-tall);
   z-index: 80;
   background: var(--cream);
   border-bottom: 1px solid var(--hairline);
@@ -901,12 +904,12 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
    switch between them — and holds a single screen instead of a scroll stack. */
 .pdp-gallery {
   position: sticky;
-  top: var(--header-h);
-  height: calc(100dvh - var(--header-h));
+  /* see .plp-subheader: the offset stays put while the header compacts */
+  top: var(--header-h-tall);
+  height: calc(100dvh - var(--header-h-tall));
   display: flex; align-items: center; justify-content: center;
   background: var(--blue);
   overflow: hidden;
-  transition: top var(--header-anim), height var(--header-anim);
 }
 /* every shot sits in the same box; only the active one is faded in */
 .pdp-gallery__stack {
@@ -1001,9 +1004,8 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
 /* ~1.5x larger panel so it holds its own next to the full-bleed photos */
 .pdp-panel {
   position: sticky;
-  top: var(--header-h);
-  min-height: calc(100dvh - var(--header-h));
-  transition: top var(--header-anim), min-height var(--header-anim);
+  top: var(--header-h-tall);
+  min-height: calc(100dvh - var(--header-h-tall));
   display: flex; flex-direction: column; justify-content: center;
   padding: 48px clamp(24px, 3vw, 56px);
   max-width: 660px;
