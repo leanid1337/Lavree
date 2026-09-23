@@ -156,12 +156,11 @@ h1, h2, h3, .serif {
               color var(--header-fill-anim),
               border-color var(--header-fill-anim);
 }
-/* the scroll compaction moves height, fill and ink together on one curve */
+/* Compacting eases the height only. Fading the fill in over the same 600ms
+   left the bar see-through while it ran, with the page sliding through it, so
+   the cream is there from the first frame. */
 body .site-header.header--compact {
-  transition: height var(--header-anim),
-              background var(--header-anim),
-              color var(--header-anim),
-              border-color var(--header-anim);
+  transition: height var(--header-anim);
 }
 
 /* Over a dark slide (hero / Navy Edit) the header sits on a solid black bar
@@ -807,9 +806,9 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
 
 .plp-subheader {
   position: sticky;
-  /* pinned to the tall header: a top that eases with the bar drifts against
-     the scroll for the whole 600ms */
-  top: var(--header-h-tall);
+  /* tracks the bar so no strip of the grid shows between the two */
+  top: var(--header-h);
+  transition: top var(--header-anim);
   z-index: 80;
   background: var(--cream);
   border-bottom: 1px solid var(--hairline);
@@ -904,9 +903,11 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
    switch between them — and holds a single screen instead of a scroll stack. */
 .pdp-gallery {
   position: sticky;
-  /* see .plp-subheader: the offset stays put while the header compacts */
-  top: var(--header-h-tall);
-  height: calc(100dvh - var(--header-h-tall));
+  /* the offset follows the bar; the height is a constant, because easing a
+     layout property re-lays the column out on every frame of the scroll */
+  top: var(--header-h);
+  height: calc(100dvh - var(--header-h-compact));
+  transition: top var(--header-anim);
   display: flex; align-items: center; justify-content: center;
   background: var(--blue);
   overflow: hidden;
@@ -1004,8 +1005,9 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
 /* ~1.5x larger panel so it holds its own next to the full-bleed photos */
 .pdp-panel {
   position: sticky;
-  top: var(--header-h-tall);
-  min-height: calc(100dvh - var(--header-h-tall));
+  top: var(--header-h);
+  min-height: calc(100dvh - var(--header-h-compact));
+  transition: top var(--header-anim);
   display: flex; flex-direction: column; justify-content: center;
   padding: 48px clamp(24px, 3vw, 56px);
   max-width: 660px;
