@@ -1287,11 +1287,34 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
    ============================================================ */
 
 .about { padding-top: var(--header-h-tall); }
+/* the opening line reads over the intro clip, so the clip is darkened and
+   the type turns light — the same arrangement as the home hero */
 .about-hero {
+  position: relative;
+  overflow: hidden;
   min-height: 72dvh;
   display: flex; align-items: center; justify-content: center;
   text-align: center;
   padding: 10vh clamp(20px, 6vw, 80px);
+  background: var(--blue);
+  color: var(--cream);
+}
+.about-hero__veil {
+  position: absolute; inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(70% 55% at 50% 50%, rgba(20, 22, 28, 0.42), transparent 70%),
+    linear-gradient(180deg,
+      rgba(20, 22, 28, 0.62),
+      rgba(20, 22, 28, 0.44) 38%,
+      rgba(20, 22, 28, 0.44) 62%,
+      rgba(20, 22, 28, 0.66));
+}
+.about-hero h1 {
+  position: relative; z-index: 2;
+  color: var(--cream); /* overrides the base heading colour: this one is over film */
+  text-shadow: 0 2px 24px rgba(20, 22, 28, 0.45);
 }
 .about-hero h1 {
   font-size: clamp(30px, 4.6vw, 58px);
@@ -1303,7 +1326,7 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
 .about-hero h1 em {
   font-family: var(--font-script);
   font-style: normal; font-weight: 400;
-  color: var(--bordeaux);
+  color: var(--vanilla); /* bordeaux disappears against the darkened clip */
   letter-spacing: 0;
 }
 
@@ -1320,13 +1343,6 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
   background: var(--vanilla); /* stands in until the clip has loaded */
 }
 
-/* full-bleed clip under the opening line */
-.about-band {
-  position: relative;
-  height: min(66dvh, 620px);
-  overflow: hidden;
-  background: var(--vanilla);
-}
 .about-media {
   position: absolute; inset: 0;
   display: block;
@@ -1465,7 +1481,6 @@ body.hero-dark .slide-dots button::before { background: var(--cream); }
   .about-row { grid-template-columns: 1fr; }
   .about-row--flip .about-row__media { order: 0; }
   .about-row__media { min-height: 42vh; }
-  .about-band { height: 42vh; }
   .about-facts { grid-template-columns: 1fr; }
   .about-facts div { border-right: 0; border-bottom: 1px solid var(--hairline); padding: 5vh 20px; }
   .about-facts div:last-child { border-bottom: 0; }

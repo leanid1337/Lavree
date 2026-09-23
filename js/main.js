@@ -646,6 +646,7 @@
       entries.forEach(function (en) {
         var v = en.target;
         if (!en.isIntersecting) { v.pause(); return; }
+        load(v); /* a block that starts on screen may be seen before the preloader */
         if (still) return; /* reduced motion: the first frame stands in for it */
         var play = v.play();
         if (play && play.catch) play.catch(function () {}); /* autoplay refused */
