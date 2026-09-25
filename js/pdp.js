@@ -11,7 +11,7 @@
     var id = new URLSearchParams(location.search).get("id");
     var p = L.productById(id) || L.PRODUCTS[0];
 
-    document.title = p.name + " — LAVRÉE studio";
+    document.title = p.name + " — LAVREE";
     document.querySelector("[data-pdp-name]").textContent = p.name;
     document.querySelector("[data-pdp-price]").textContent = L.formatPrice(p.price);
     document.querySelector("[data-pdp-details]").textContent = p.details;
