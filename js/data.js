@@ -18,6 +18,7 @@ LAVREE.SWATCHES = {
   vanilla: "#E9E2C9",
   navy: "#2C4066",
   indigo: "#3A4A6E",
+  sky: "#A9C1D9",
   black: "#20201F"
 };
 
@@ -37,7 +38,7 @@ LAVREE.PRODUCTS = [
     category: "kalhoty",
     subs: ["wide", "navy"],
     price: 1490,
-    colors: ["cream", "navy", "black"],
+    colors: ["cream", "navy"],
     sizes: { XS: true, S: true, M: true, L: true, XL: false },
     tone: "cream",
     toneAlt: "blue",
@@ -59,7 +60,7 @@ LAVREE.PRODUCTS = [
     category: "sortky",
     subs: ["wide"],
     price: 1090,
-    colors: ["vanilla", "cream"],
+    colors: ["vanilla", "cream", "sky"],
     sizes: { XS: true, S: true, M: true, L: true, XL: true },
     tone: "vanilla",
     toneAlt: "milk",
